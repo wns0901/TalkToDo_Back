@@ -1,3 +1,27 @@
+server:
+  port: 8080
+
+  tomcat:
+    max-http-form-post-size: 10GB
+
 spring:
-  profiles:
-    active: dev
+  application.name: TalkToDo
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/talktodo_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+    username: admin
+    password: 1234
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+    hibernate:
+      ddl-auto: update
+
+  servlet:
+    # Multipart request 의 업로드 파일 크기 제한 설정
+    multipart:
+      max-file-size: 10GB # 요청 파일 하나의 최대 크기
+      max-request-size: 10GB # 요청 파일 전체의 최대 크기
