@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.*;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,7 +30,7 @@ public class Schedule extends BaseTimeEntity {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
-    @ManyToMany
+    @ManyToOne
     @JoinTable(
         name = "schedule_todos",
         joinColumns = @JoinColumn(name = "schedule_id"),
