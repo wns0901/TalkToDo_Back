@@ -2,12 +2,6 @@ package com.example.TalkToDo.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.util.List;
-
-import com.example.TalkToDo.entity.BaseTimeEntity;
-import com.example.TalkToDo.entity.Meeting;
-import com.example.TalkToDo.entity.Todo;
-import com.example.TalkToDo.entity.User;
 
 import lombok.*;
 
@@ -18,7 +12,6 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "schedules")
-@EqualsAndHashCode(callSuper = true)
 public class Schedule extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,15 +33,6 @@ public class Schedule extends BaseTimeEntity {
     private boolean displayInCalendar;
     private boolean isTodo;
     private Long originalTodoId;
-
-    @ManyToOne
-    @JoinTable(
-        name = "schedule_todos",
-        joinColumns = @JoinColumn(name = "schedule_id"),
-        inverseJoinColumns = @JoinColumn(name = "todo_id")
-    )
-    private List<Todo> linkedTodos;
-
     private boolean addedToMySchedule;
 
     public String getUserId() {
