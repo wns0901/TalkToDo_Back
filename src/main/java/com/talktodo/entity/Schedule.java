@@ -1,9 +1,13 @@
-package com.example.TalkToDo.entity;
+package com.talktodo.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.*;
+import com.talktodo.entity.BaseTimeEntity;
+import com.talktodo.entity.User;
+import com.talktodo.entity.Meeting;
+import com.talktodo.entity.Todo;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -12,6 +16,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "schedules")
+@EqualsAndHashCode(callSuper = true)
 public class Schedule extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +32,12 @@ public class Schedule extends BaseTimeEntity {
 
     private String type;
     private String title;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String category;
+    private boolean displayInCalendar;
+    private boolean isTodo;
+    private Long originalTodoId;
 
     @ManyToOne
     @JoinTable(
@@ -40,4 +49,12 @@ public class Schedule extends BaseTimeEntity {
 
     private boolean addedToMySchedule;
 
+    public String getUserId() {
+        return user != null ? user.getId().toString() : null;
+    }
+
+    public void setUserId(String userId) {
+        if (this.user == null) this.user = new User();
+        this.user.setId(Long.parseLong(userId));
+    }
 } 
