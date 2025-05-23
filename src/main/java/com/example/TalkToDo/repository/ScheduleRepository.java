@@ -1,8 +1,10 @@
-package com.talktodo.repository;
+package com.example.TalkToDo.repository;
 
-import com.talktodo.entity.Schedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.example.TalkToDo.entity.Schedule;
+
 import java.time.LocalDate;
 import java.util.List;
 

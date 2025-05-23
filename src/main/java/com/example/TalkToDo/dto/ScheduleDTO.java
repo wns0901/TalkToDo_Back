@@ -1,4 +1,4 @@
-package com.talktodo.dto;
+package com.example.TalkToDo.dto;
 
 import lombok.Getter;
 import lombok.Setter;

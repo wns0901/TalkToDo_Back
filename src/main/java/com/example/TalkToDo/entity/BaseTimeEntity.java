@@ -1,4 +1,4 @@
-package com.talktodo.entity;
+package com.example.TalkToDo.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

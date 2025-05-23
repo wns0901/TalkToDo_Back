@@ -1,8 +1,9 @@
-package com.talktodo.service;
+package com.example.TalkToDo.service;
 
-import com.talktodo.dto.ScheduleDTO;
-import com.talktodo.entity.Schedule;
-import com.talktodo.repository.ScheduleRepository;
+import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.repository.ScheduleRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
