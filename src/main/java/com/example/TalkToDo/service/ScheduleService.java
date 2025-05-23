@@ -2,7 +2,9 @@ package com.example.TalkToDo.service;
 
 import com.example.TalkToDo.dto.ScheduleDTO;
 import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.entity.User;
 import com.example.TalkToDo.repository.ScheduleRepository;
+import com.example.TalkToDo.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,9 @@ public class ScheduleService {
 
     @Autowired
     private ScheduleRepository scheduleRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // 일정 생성
     @Transactional
@@ -75,6 +80,17 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
+    // 날짜별 일정 조회
+    public List<ScheduleDTO> getSchedulesByDate(Long userId, LocalDate date) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return scheduleRepository
+            .findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date)
+            .stream()
+            .map(this::convertToDTO)
+            .collect(Collectors.toList());
+    }
+
     // DTO를 Entity로 변환
     private Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
@@ -92,17 +108,22 @@ public class ScheduleService {
     }
 
     // Entity를 DTO로 변환
-    private ScheduleDTO convertToDTO(Schedule schedule) {
+    public ScheduleDTO convertToDTO(Schedule schedule) {
         ScheduleDTO dto = new ScheduleDTO();
         dto.setId(schedule.getId());
-        dto.setUserId(schedule.getUserId());
         dto.setTitle(schedule.getTitle());
+        dto.setDate(schedule.getDate());
         dto.setStartDate(schedule.getStartDate());
         dto.setEndDate(schedule.getEndDate());
         dto.setCategory(schedule.getCategory());
         dto.setType(schedule.getType());
-        dto.setDisplayInCalendar(schedule.isDisplayInCalendar());
+        dto.setUserId(schedule.getUser().getId());
+        dto.setCategoryDisplayName(schedule.getCategoryDisplayName());
+        dto.setTypeDisplayName(schedule.getTypeDisplayName());
+        dto.setCompleted(schedule.isCompleted());
+        dto.setFromMeeting(schedule.getFromMeeting());
         dto.setTodo(schedule.isTodo());
+        dto.setDisplayInCalendar(schedule.isDisplayInCalendar());
         dto.setOriginalTodoId(schedule.getOriginalTodoId());
         return dto;
     }
@@ -117,5 +138,15 @@ public class ScheduleService {
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
         schedule.setTodo(dto.isTodo());
         schedule.setOriginalTodoId(dto.getOriginalTodoId());
+    }
+
+    @Transactional
+    public void addScheduleToUser(Long scheduleId, Long userId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+            .orElseThrow(() -> new RuntimeException("일정 없음"));
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("유저 없음"));
+        schedule.setUser(user);
+        scheduleRepository.save(schedule);
     }
 } 

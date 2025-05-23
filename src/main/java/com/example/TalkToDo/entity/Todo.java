@@ -29,5 +29,11 @@ public class Todo extends BaseTimeEntity {
     private LocalDateTime dueDate;
     private String status;
 
-    private boolean addedToMyTodo;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean addedToMyTodo = false;
+    
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isSchedule = false;
 } 

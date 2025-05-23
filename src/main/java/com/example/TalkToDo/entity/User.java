@@ -21,7 +21,9 @@ public class User extends BaseTimeEntity {
     private String position;
     private String username;
     private String role;
-    private boolean isActive;
+    private String password;
 
-
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
 } 
