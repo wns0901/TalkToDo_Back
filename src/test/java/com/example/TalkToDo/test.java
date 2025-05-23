@@ -2,6 +2,7 @@ package com.example.TalkToDo;
 
 import com.example.TalkToDo.entity.User;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.example.TalkToDo.repository.UserRepository;
@@ -13,6 +14,9 @@ public class test {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired
+  private PasswordEncoder passwordEncoder;
+
   @Test
   public void test1() {
     User user = new User();
@@ -21,7 +25,7 @@ public class test {
     user.setDepartment("test");
     user.setPosition("test");
     user.setUsername("test");
-    user.setRole("test");
+    user.setPassword(passwordEncoder.encode("1234"));
 
     userRepository.save(user);
 
