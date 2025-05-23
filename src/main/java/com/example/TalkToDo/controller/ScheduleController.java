@@ -1,7 +1,8 @@
-package com.talktodo.controller;
+package com.example.TalkToDo.controller;
 
-import com.talktodo.dto.ScheduleDTO;
-import com.talktodo.service.ScheduleService;
+import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.service.ScheduleService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
