@@ -5,6 +5,7 @@ import lombok.*;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -29,7 +30,7 @@ public class Meeting extends BaseTimeEntity {
 
     private boolean favorite;
 
-    @ManyToMany
+    @OneToMany
     @JoinTable(
         name = "meeting_schedules",
         joinColumns = @JoinColumn(name = "meeting_id"),

@@ -10,6 +10,7 @@ import com.talktodo.entity.Meeting;
 import com.talktodo.entity.Todo;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -38,7 +39,7 @@ public class Schedule extends BaseTimeEntity {
     private boolean isTodo;
     private Long originalTodoId;
 
-    @ManyToMany
+    @ManyToOne
     @JoinTable(
         name = "schedule_todos",
         joinColumns = @JoinColumn(name = "schedule_id"),

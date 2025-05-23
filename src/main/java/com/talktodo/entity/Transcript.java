@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.*;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
