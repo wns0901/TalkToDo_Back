@@ -38,6 +38,8 @@ dependencies {
   implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	testImplementation 'org.springframework.security:spring-security-test'
+	// https://mvnrepository.com/artifact/io.awspring.cloud/spring-cloud-starter-aws
+    implementation group: 'io.awspring.cloud', name: 'spring-cloud-starter-aws', version: '2.4.2'
 }
 
 tasks.named('test') {

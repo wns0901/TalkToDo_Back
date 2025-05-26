@@ -5,6 +5,8 @@ import com.example.TalkToDo.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
@@ -34,14 +36,10 @@ public class MeetingController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/favorites")
-    public List<Meeting> getFavoriteMeetings() {
-        return meetingService.getFavoriteMeetings();
-    }
-
-    @PostMapping
-    public Meeting createMeeting(@RequestBody Meeting meeting) {
-        return meetingService.createMeeting(meeting);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Meeting createMeeting(
+            @RequestPart("audioFile") MultipartFile audioFile) {
+        return meetingService.createMeeting(audioFile);
     }
 
     @PutMapping("/{id}")
@@ -57,4 +55,4 @@ public class MeetingController {
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.notFound().build();
     }
-} 
+}
