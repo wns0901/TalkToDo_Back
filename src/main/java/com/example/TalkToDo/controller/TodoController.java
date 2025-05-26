@@ -1,5 +1,6 @@
 package com.example.TalkToDo.controller;
 
+import com.example.TalkToDo.dto.ScheduleDTO;
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,8 +66,8 @@ public class TodoController {
                 : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{todoId}/add-to-calendar")
-    public ResponseEntity<ScheduleDTO> addTodoToCalendar(@PathVariable Long todoId) {
-        return ResponseEntity.ok(todoService.addTodoToCalendar(todoId));
-    }
+    // @PostMapping("/{todoId}/add-to-calendar")
+    // public ResponseEntity<ScheduleDTO> addTodoToCalendar(@PathVariable Long todoId) {
+    //     return ResponseEntity.ok(todoService.addTodoToCalendar(todoId));
+    // }
 } 

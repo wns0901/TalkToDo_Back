@@ -50,7 +50,7 @@ public class ScheduleService {
 
     // 사용자의 모든 일정 조회
     public List<ScheduleDTO> getAllSchedulesByUserId(Long userId) {
-        return scheduleRepository.findByUser_Id(userId)
+        return scheduleRepository.findByUserId(userId)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -58,7 +58,7 @@ public class ScheduleService {
 
     // 기간별 일정 조회
     public List<ScheduleDTO> getSchedulesByDateRange(Long userId, LocalDate start, LocalDate end) {
-        return scheduleRepository.findByUser_IdAndStartDateBetween(userId, start, end)
+        return scheduleRepository.findByUserIdAndStartDateBetween(userId, start, end)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -66,7 +66,7 @@ public class ScheduleService {
 
     // 카테고리별 일정 조회
     public List<ScheduleDTO> getSchedulesByCategory(Long userId, String category) {
-        return scheduleRepository.findByUser_IdAndCategory(userId, category)
+        return scheduleRepository.findByUserIdAndCategory(userId, category)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -74,7 +74,7 @@ public class ScheduleService {
 
     // 할일 목록 조회
     public List<ScheduleDTO> getTodosByUserId(Long userId) {
-        return scheduleRepository.findByUser_IdAndIsTodo(userId, true)
+        return scheduleRepository.findByUserIdAndType(userId, "TODO")
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -102,8 +102,6 @@ public class ScheduleService {
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
-        schedule.setTodo(dto.isTodo());
-        schedule.setOriginalTodoId(dto.getOriginalTodoId());
         return schedule;
     }
 
@@ -112,19 +110,11 @@ public class ScheduleService {
         ScheduleDTO dto = new ScheduleDTO();
         dto.setId(schedule.getId());
         dto.setTitle(schedule.getTitle());
-        dto.setDate(schedule.getDate());
         dto.setStartDate(schedule.getStartDate());
         dto.setEndDate(schedule.getEndDate());
         dto.setCategory(schedule.getCategory());
         dto.setType(schedule.getType());
-        dto.setUserId(schedule.getUser().getId());
-        dto.setCategoryDisplayName(schedule.getCategoryDisplayName());
-        dto.setTypeDisplayName(schedule.getTypeDisplayName());
-        dto.setCompleted(schedule.isCompleted());
-        dto.setFromMeeting(schedule.getFromMeeting());
-        dto.setTodo(schedule.isTodo());
         dto.setDisplayInCalendar(schedule.isDisplayInCalendar());
-        dto.setOriginalTodoId(schedule.getOriginalTodoId());
         return dto;
     }
 
@@ -136,8 +126,6 @@ public class ScheduleService {
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
-        schedule.setTodo(dto.isTodo());
-        schedule.setOriginalTodoId(dto.getOriginalTodoId());
     }
 
     @Transactional
