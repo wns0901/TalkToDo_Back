@@ -64,4 +64,9 @@ public class TodoController {
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.notFound().build();
     }
+
+    @PostMapping("/{todoId}/add-to-calendar")
+    public ResponseEntity<ScheduleDTO> addTodoToCalendar(@PathVariable Long todoId) {
+        return ResponseEntity.ok(todoService.addTodoToCalendar(todoId));
+    }
 } 

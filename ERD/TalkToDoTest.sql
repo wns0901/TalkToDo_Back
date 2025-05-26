@@ -1,6 +1,6 @@
 -- TalkToDo 테스트 쿼리
 -- 1. user1의 모든 일정 조회
-SELECT * FROM schedule WHERE user_id = 'user1';
+SELECT * FROM schedules WHERE id = '1';
 
 -- 2. 2024년 7월의 일정 조회
 SELECT * FROM schedule WHERE start_date BETWEEN '2024-07-01' AND '2024-07-31';

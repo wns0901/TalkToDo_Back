@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -67,5 +68,21 @@ public class ScheduleController {
     @GetMapping("/user/{userId}/todos")
     public ResponseEntity<List<ScheduleDTO>> getTodosByUserId(@PathVariable String userId) {
         return ResponseEntity.ok(scheduleService.getTodosByUserId(Long.parseLong(userId)));
+    }
+
+    // 날짜별 일정 조회
+    @GetMapping("/user/{userId}/date")
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByDate(
+            @PathVariable Long userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(scheduleService.getSchedulesByDate(userId, date));
+    }
+
+    @PostMapping("/{scheduleId}/add-to-my-schedule")
+    public ResponseEntity<?> addToMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
+        // user.getUsername() 또는 user.getId()로 실제 유저 ID 추출 필요
+        // 예시로 user.getUsername()이 Long 타입 ID라고 가정
+        scheduleService.addScheduleToUser(scheduleId, Long.parseLong(user.getUsername()));
+        return ResponseEntity.ok().build();
     }
 } 

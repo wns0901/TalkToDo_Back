@@ -31,9 +31,9 @@ public class Schedule extends BaseTimeEntity {
     private LocalDate endDate;
     private String category;
     private boolean displayInCalendar;
-    private boolean isTodo;
-    private Long originalTodoId;
-    private boolean addedToMySchedule;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean addedToMySchedule = false;
 
     public String getUserId() {
         return user != null ? user.getId().toString() : null;
