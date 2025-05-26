@@ -80,8 +80,6 @@ public class ScheduleController {
 
     @PostMapping("/{scheduleId}/add-to-my-schedule")
     public ResponseEntity<?> addToMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
-        // user.getUsername() 또는 user.getId()로 실제 유저 ID 추출 필요
-        // 예시로 user.getUsername()이 Long 타입 ID라고 가정
         scheduleService.addScheduleToUser(scheduleId, Long.parseLong(user.getUsername()));
         return ResponseEntity.ok().build();
     }
