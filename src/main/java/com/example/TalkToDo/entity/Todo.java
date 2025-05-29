@@ -22,11 +22,16 @@ public class Todo extends BaseTimeEntity {
 
     private String title;
 
+    private String type;
+
+    private LocalDateTime startDate;
+
+    private LocalDateTime dueDate;
+
     @ManyToOne
     @JoinColumn(name = "assignee_id")
     private User assignee;
 
-    private LocalDateTime dueDate;
     private String status;
 
     @Column(nullable = false)
@@ -36,4 +41,15 @@ public class Todo extends BaseTimeEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean isSchedule = false;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
 } 

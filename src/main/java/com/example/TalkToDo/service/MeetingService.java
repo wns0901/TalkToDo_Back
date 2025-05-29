@@ -1,18 +1,28 @@
 package com.example.TalkToDo.service;
 
+import com.example.TalkToDo.dto.MeetingDTO;
+import com.example.TalkToDo.dto.MeetingNotesDTO;
+import com.example.TalkToDo.dto.TodoDTO;
+import com.example.TalkToDo.dto.TranscriptLineDTO;
 import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.User;
+import com.example.TalkToDo.entity.Todo;
+import com.example.TalkToDo.entity.TranscriptLine;
 import com.example.TalkToDo.repository.MeetingRepository;
 import com.example.TalkToDo.repository.UserRepository;
+import com.example.TalkToDo.repository.TodoRepository;
+import com.example.TalkToDo.repository.TranscriptLineRepository;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +33,12 @@ public class MeetingService {
     private final UserRepository userRepository;
 
     private final S3Service s3Service;
+
+    @Autowired
+    private TodoRepository todoRepository;
+
+    @Autowired
+    private TranscriptLineRepository transcriptLineRepository;
 
     public List<Meeting> getAllMeetings() {
         return meetingRepository.findAll();
@@ -60,5 +76,111 @@ public class MeetingService {
                     return true;
                 })
                 .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public MeetingDTO getMeetingDetails(Long meetingId) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+
+        MeetingDTO dto = new MeetingDTO();
+        dto.setId(meeting.getId());
+        dto.setTitle(meeting.getTitle());
+        dto.setSummary(meeting.getSummary());
+        dto.setTasks(meeting.getTasks());
+
+        // 담당자 정보 설정
+        if (meeting.getUser() != null) {
+            dto.setUserId(meeting.getUser().getId());
+            dto.setUserName(meeting.getUser().getName());
+        }
+        if (meeting.getCreatedBy() != null) {
+            dto.setCreatedById(meeting.getCreatedBy().getId());
+            dto.setCreatedByName(meeting.getCreatedBy().getName());
+        }
+
+        // 할일 목록 변환
+        List<TodoDTO> todos = todoRepository.findByMeeting(meeting).stream()
+                .map(this::convertToTodoDTO)
+                .collect(Collectors.toList());
+        dto.setTodos(todos);
+
+        // 회의록 텍스트 변환
+        List<TranscriptLineDTO> transcript = transcriptLineRepository.findByMeeting(meeting).stream()
+                .map(this::convertToTranscriptLineDTO)
+                .collect(Collectors.toList());
+        dto.setTranscript(transcript);
+
+        // 회의록 정보 변환
+        MeetingNotesDTO notes = new MeetingNotesDTO();
+        notes.setTitle(meeting.getTitle());
+        notes.setSummary(meeting.getSummary());
+        notes.setTasks(meeting.getTasks());
+        dto.setNotes(notes);
+
+        return dto;
+    }
+
+    @Transactional
+    public MeetingNotesDTO updateMeetingNotes(Long meetingId, MeetingNotesDTO notesDTO) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+
+        meeting.setTitle(notesDTO.getTitle());
+        meeting.setSummary(notesDTO.getSummary());
+        meeting.setTasks(notesDTO.getTasks());
+
+        Meeting updatedMeeting = meetingRepository.save(meeting);
+        return convertToMeetingNotesDTO(updatedMeeting);
+    }
+
+    @Transactional
+    public List<TranscriptLineDTO> updateTranscript(Long meetingId, List<TranscriptLineDTO> transcriptLines) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+
+        List<TranscriptLine> lines = transcriptLines.stream()
+                .map(dto -> {
+                    TranscriptLine line = transcriptLineRepository.findById(dto.getId())
+                            .orElseThrow(() -> new RuntimeException("Transcript line not found"));
+                    line.setText(dto.getText());
+                    return transcriptLineRepository.save(line);
+                })
+                .collect(Collectors.toList());
+
+        return lines.stream()
+                .map(this::convertToTranscriptLineDTO)
+                .collect(Collectors.toList());
+    }
+
+    private TodoDTO convertToTodoDTO(Todo todo) {
+        TodoDTO dto = new TodoDTO();
+        dto.setId(todo.getId());
+        dto.setText(todo.getTitle());
+        dto.setType(todo.getType());
+        dto.setStartDate(todo.getStartDate());
+        dto.setDueDate(todo.getDueDate());
+        dto.setAssignee(todo.getAssignee() != null ? todo.getAssignee().getName() : null);
+        dto.setStatus(todo.getStatus());
+        dto.setSchedule(todo.isSchedule());
+        return dto;
+    }
+
+    private TranscriptLineDTO convertToTranscriptLineDTO(TranscriptLine line) {
+        TranscriptLineDTO dto = new TranscriptLineDTO();
+        dto.setId(line.getId());
+        dto.setText(line.getText());
+        dto.setStart(line.getStartTime());
+        dto.setEnd(line.getEndTime());
+        dto.setSpeaker(line.getSpeaker());
+        return dto;
+    }
+
+    private MeetingNotesDTO convertToMeetingNotesDTO(Meeting meeting) {
+        MeetingNotesDTO dto = new MeetingNotesDTO();
+        dto.setTitle(meeting.getTitle());
+        dto.setSummary(meeting.getSummary());
+        dto.setTasks(meeting.getTasks());
+        return dto;
     }
 } 

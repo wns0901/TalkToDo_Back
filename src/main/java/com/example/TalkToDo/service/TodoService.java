@@ -8,15 +8,14 @@ import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.MeetingRepository;
 import com.example.TalkToDo.repository.UserRepository;
-
-import jakarta.transaction.Transactional;
-
 import com.example.TalkToDo.repository.ScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class TodoService {
@@ -59,14 +58,22 @@ public class TodoService {
         return todoRepository.save(todo);
     }
 
+    @Transactional
     public Optional<Todo> updateTodo(Long id, Todo todoDetails) {
         return todoRepository.findById(id)
                 .map(existingTodo -> {
-                    todoDetails.setId(id);
-                    return todoRepository.save(todoDetails);
+                    existingTodo.setTitle(todoDetails.getTitle());
+                    existingTodo.setMeeting(todoDetails.getMeeting());
+                    existingTodo.setAssignee(todoDetails.getAssignee());
+                    existingTodo.setDueDate(todoDetails.getDueDate());
+                    existingTodo.setStatus(todoDetails.getStatus());
+                    existingTodo.setAddedToMyTodo(todoDetails.isAddedToMyTodo());
+                    existingTodo.setSchedule(todoDetails.isSchedule());
+                    return todoRepository.save(existingTodo);
                 });
     }
 
+    @Transactional
     public boolean deleteTodo(Long id) {
         return todoRepository.findById(id)
                 .map(todo -> {
@@ -105,4 +112,41 @@ public class TodoService {
     //     dto.setOriginalTodoId(saved.getOriginalTodoId());
     //     return dto;
     // }
+
+    @Transactional(readOnly = true)
+    public List<Todo> getActiveTodos(Long userId) {
+        return todoRepository.findByAssigneeIdAndStatusNot(userId, "COMPLETED");
+    }
+
+    @Transactional(readOnly = true)
+    public List<Todo> getCompletedTodos(Long userId) {
+        return todoRepository.findByAssigneeIdAndStatus(userId, "COMPLETED");
+    }
+
+    @Transactional
+    public Todo toggleTodoComplete(Long id) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+        
+        if ("COMPLETED".equals(todo.getStatus())) {
+            todo.setStatus("IN_PROGRESS");
+            todo.setCompletedAt(null);
+        } else {
+            todo.setStatus("COMPLETED");
+            todo.setCompletedAt(LocalDateTime.now());
+        }
+        
+        return todoRepository.save(todo);
+    }
+
+    @Transactional
+    public Todo restoreTodo(Long id) {
+        Todo todo = todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+        
+        todo.setStatus("IN_PROGRESS");
+        todo.setCompletedAt(null);
+        
+        return todoRepository.save(todo);
+    }
 } 

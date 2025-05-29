@@ -12,4 +12,7 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
     List<Todo> findByMeeting(Meeting meeting);
     List<Todo> findByAssignee(User user);
     List<Todo> findByStatus(String status);
+    List<Todo> findByAssigneeId(Long assigneeId);
+    List<Todo> findByAssigneeIdAndStatus(Long assigneeId, String status);
+    List<Todo> findByAssigneeIdAndStatusNot(Long assigneeId, String status);
 } 
