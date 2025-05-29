@@ -15,12 +15,16 @@ public class TranscriptLine extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String timestamp;
+    @Column(columnDefinition = "TEXT")
+    private String text;
+
+    private double startTime;
+
+    private double endTime;
+
     private String speaker;
-    private String content;
 
     @ManyToOne
-    @JoinColumn(name = "transcript_id")
-    private Transcript transcript;
-
+    @JoinColumn(name = "meeting_id")
+    private Meeting meeting;
 } 

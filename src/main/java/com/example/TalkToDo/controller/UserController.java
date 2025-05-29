@@ -2,6 +2,7 @@ package com.example.TalkToDo.controller;
 
 import com.example.TalkToDo.entity.User;
 import com.example.TalkToDo.service.UserService;
+import com.example.TalkToDo.dto.MyPageDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,5 +57,13 @@ public class UserController {
         return userService.deleteUser(id)
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.notFound().build();
+    }
+
+    // 마이페이지 데이터 조회
+    @GetMapping("/{id}/mypage")
+    public ResponseEntity<MyPageDTO> getMyPageData(@PathVariable Long id) {
+        return userService.getMyPageData(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 } 

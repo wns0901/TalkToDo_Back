@@ -70,4 +70,28 @@ public class TodoController {
     // public ResponseEntity<ScheduleDTO> addTodoToCalendar(@PathVariable Long todoId) {
     //     return ResponseEntity.ok(todoService.addTodoToCalendar(todoId));
     // }
+
+    // 활성 할일 조회
+    @GetMapping("/user/{userId}/active")
+    public List<Todo> getActiveTodos(@PathVariable Long userId) {
+        return todoService.getActiveTodos(userId);
+    }
+
+    // 완료된 할일 조회
+    @GetMapping("/user/{userId}/completed")
+    public List<Todo> getCompletedTodos(@PathVariable Long userId) {
+        return todoService.getCompletedTodos(userId);
+    }
+
+    // 할일 완료 상태 토글
+    @PutMapping("/{id}/complete")
+    public Todo toggleTodoComplete(@PathVariable Long id) {
+        return todoService.toggleTodoComplete(id);
+    }
+
+    // 할일 복구
+    @PutMapping("/{id}/restore")
+    public Todo restoreTodo(@PathVariable Long id) {
+        return todoService.restoreTodo(id);
+    }
 } 

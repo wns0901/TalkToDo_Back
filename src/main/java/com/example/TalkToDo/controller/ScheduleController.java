@@ -1,6 +1,7 @@
 package com.example.TalkToDo.controller;
 
 import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.service.ScheduleService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/schedules")
@@ -19,6 +21,18 @@ public class ScheduleController {
 
     @Autowired
     private ScheduleService scheduleService;
+
+    // 모든 일정 조회
+    @GetMapping
+    public ResponseEntity<List<ScheduleDTO>> getAllSchedules() {
+        return ResponseEntity.ok(scheduleService.getAllSchedules());
+    }
+
+    // 특정 일정 조회
+    @GetMapping("/{id}")
+    public ResponseEntity<ScheduleDTO> getScheduleById(@PathVariable Long id) {
+        return ResponseEntity.ok(scheduleService.getScheduleById(id));
+    }
 
     // 일정 생성
     @PostMapping
@@ -70,7 +84,7 @@ public class ScheduleController {
         return ResponseEntity.ok(scheduleService.getTodosByUserId(Long.parseLong(userId)));
     }
 
-    // 날짜별 일정 조회
+    // 날짜별 일정 조회 (통합된 메서드)
     @GetMapping("/user/{userId}/date")
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByDate(
             @PathVariable Long userId,
@@ -81,6 +95,36 @@ public class ScheduleController {
     @PostMapping("/{scheduleId}/add-to-my-schedule")
     public ResponseEntity<?> addToMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
         scheduleService.addScheduleToUser(scheduleId, Long.parseLong(user.getUsername()));
+        return ResponseEntity.ok().build();
+    }
+
+    // 월별 일정 조회
+    @GetMapping("/user/{userId}/month/{year}/{month}")
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByMonth(
+            @PathVariable Long userId,
+            @PathVariable int year,
+            @PathVariable int month) {
+        List<Schedule> schedules = scheduleService.getSchedulesByMonth(userId, year, month);
+        List<ScheduleDTO> scheduleDTOs = schedules.stream()
+                .map(scheduleService::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(scheduleDTOs);
+    }
+
+    // 할일을 캘린더에 추가
+    @PostMapping("/todo/{todoId}/calendar")
+    public ResponseEntity<ScheduleDTO> addTodoToCalendar(
+            @PathVariable Long todoId,
+            @RequestBody ScheduleDTO scheduleDTO) {
+        Schedule schedule = scheduleService.convertToEntity(scheduleDTO);
+        Schedule savedSchedule = scheduleService.addTodoToCalendar(todoId, schedule);
+        return ResponseEntity.ok(scheduleService.convertToDTO(savedSchedule));
+    }
+
+    // 할일을 캘린더에서 제거
+    @DeleteMapping("/todo/{todoId}/calendar")
+    public ResponseEntity<?> removeTodoFromCalendar(@PathVariable Long todoId) {
+        scheduleService.removeTodoFromCalendar(todoId);
         return ResponseEntity.ok().build();
     }
 } 

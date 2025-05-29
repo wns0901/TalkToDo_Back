@@ -2,8 +2,10 @@ package com.example.TalkToDo.service;
 
 import com.example.TalkToDo.dto.ScheduleDTO;
 import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.entity.User;
 import com.example.TalkToDo.repository.ScheduleRepository;
+import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,23 @@ public class ScheduleService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TodoRepository todoRepository;
+
+    // 모든 일정 조회
+    public List<ScheduleDTO> getAllSchedules() {
+        return scheduleRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 특정 일정 조회
+    public ScheduleDTO getScheduleById(Long id) {
+        return scheduleRepository.findById(id)
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new RuntimeException("Schedule not found with id: " + id));
+    }
 
     // 일정 생성
     @Transactional
@@ -80,7 +100,8 @@ public class ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    // 날짜별 일정 조회
+    // 날짜별 일정 조회 (통합된 메서드)
+    @Transactional(readOnly = true)
     public List<ScheduleDTO> getSchedulesByDate(Long userId, LocalDate date) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
@@ -92,7 +113,7 @@ public class ScheduleService {
     }
 
     // DTO를 Entity로 변환
-    private Schedule convertToEntity(ScheduleDTO dto) {
+    public Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
         schedule.setId(dto.getId());
         schedule.setUserId(dto.getUserId());
@@ -136,5 +157,33 @@ public class ScheduleService {
             .orElseThrow(() -> new RuntimeException("유저 없음"));
         schedule.setUser(user);
         scheduleRepository.save(schedule);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Schedule> getSchedulesByMonth(Long userId, int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+        return scheduleRepository.findByUserIdAndStartDateBetween(userId, startDate, endDate);
+    }
+
+    @Transactional
+    public Schedule addTodoToCalendar(Long todoId, Schedule schedule) {
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+        
+        schedule.setTitle(todo.getTitle());
+        schedule.setCategory("TODO");
+        schedule.setType("TODO");
+        schedule.setIsTodo(true);
+        schedule.setOriginalTodoId(todoId);
+        schedule.setDisplayInCalendar(true);
+        
+        return scheduleRepository.save(schedule);
+    }
+
+    @Transactional
+    public void removeTodoFromCalendar(Long todoId) {
+        scheduleRepository.deleteByOriginalTodoId(todoId);
     }
 } 

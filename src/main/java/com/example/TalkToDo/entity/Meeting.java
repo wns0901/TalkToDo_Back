@@ -18,6 +18,19 @@ public class Meeting extends BaseTimeEntity {
 
     private String title;
 
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
+    @Column(columnDefinition = "TEXT")
+    private String tasks;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private String audioFileUrl;
+    private String transcriptFileUrl;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;

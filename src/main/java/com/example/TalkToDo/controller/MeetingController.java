@@ -1,6 +1,9 @@
 package com.example.TalkToDo.controller;
 
 import com.example.TalkToDo.entity.Meeting;
+import com.example.TalkToDo.dto.MeetingDTO;
+import com.example.TalkToDo.dto.MeetingNotesDTO;
+import com.example.TalkToDo.dto.TranscriptLineDTO;
 import com.example.TalkToDo.service.MeetingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +26,8 @@ public class MeetingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Meeting> getMeetingById(@PathVariable Long id) {
-        return meetingService.getMeetingById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<MeetingDTO> getMeetingDetails(@PathVariable Long id) {
+        return ResponseEntity.ok(meetingService.getMeetingDetails(id));
     }
 
     @GetMapping("/user/{userId}")
@@ -54,5 +55,21 @@ public class MeetingController {
         return meetingService.deleteMeeting(id)
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.notFound().build();
+    }
+
+    // 회의록 수정
+    @PutMapping("/{meetingId}/notes")
+    public ResponseEntity<MeetingNotesDTO> updateMeetingNotes(
+            @PathVariable Long meetingId,
+            @RequestBody MeetingNotesDTO notesDTO) {
+        return ResponseEntity.ok(meetingService.updateMeetingNotes(meetingId, notesDTO));
+    }
+
+    // 회의록 텍스트 수정
+    @PutMapping("/{meetingId}/transcript")
+    public ResponseEntity<List<TranscriptLineDTO>> updateTranscript(
+            @PathVariable Long meetingId,
+            @RequestBody List<TranscriptLineDTO> transcriptLines) {
+        return ResponseEntity.ok(meetingService.updateTranscript(meetingId, transcriptLines));
     }
 }
