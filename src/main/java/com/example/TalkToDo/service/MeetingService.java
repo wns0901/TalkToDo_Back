@@ -1,44 +1,47 @@
 package com.example.TalkToDo.service;
 
-import com.example.TalkToDo.dto.MeetingDTO;
-import com.example.TalkToDo.dto.MeetingNotesDTO;
-import com.example.TalkToDo.dto.TodoDTO;
-import com.example.TalkToDo.dto.TranscriptLineDTO;
-import com.example.TalkToDo.entity.Meeting;
-import com.example.TalkToDo.entity.User;
-import com.example.TalkToDo.entity.Todo;
-import com.example.TalkToDo.entity.TranscriptLine;
-import com.example.TalkToDo.repository.MeetingRepository;
-import com.example.TalkToDo.repository.UserRepository;
-import com.example.TalkToDo.repository.TodoRepository;
-import com.example.TalkToDo.repository.TranscriptLineRepository;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import com.example.TalkToDo.dto.MeetingDTO;
+import com.example.TalkToDo.dto.MeetingDataDTO;
+import com.example.TalkToDo.dto.MeetingNotesDTO;
+import com.example.TalkToDo.dto.TodoDTO;
+import com.example.TalkToDo.dto.TranscriptLineDTO;
+import com.example.TalkToDo.entity.Meeting;
+import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.entity.Todo;
+import com.example.TalkToDo.entity.TranscriptLine;
+import com.example.TalkToDo.entity.User;
+import com.example.TalkToDo.repository.MeetingRepository;
+import com.example.TalkToDo.repository.ScheduleRepository;
+import com.example.TalkToDo.repository.TodoRepository;
+import com.example.TalkToDo.repository.TranscriptLineRepository;
+import com.example.TalkToDo.repository.UserRepository;
+import com.example.TalkToDo.util.FakeApi;
+import com.example.TalkToDo.util.Util;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class MeetingService {
 
     private final MeetingRepository meetingRepository;
-
     private final UserRepository userRepository;
-
     private final S3Service s3Service;
-
-    @Autowired
-    private TodoRepository todoRepository;
-
-    @Autowired
-    private TranscriptLineRepository transcriptLineRepository;
+    private final FakeApi fakeApi;
+    private final Util util;
+    private final ScheduleRepository scheduleRepository;
+    private final TodoRepository todoRepository;
+    private final TranscriptLineRepository transcriptLineRepository;
 
     public List<Meeting> getAllMeetings() {
         return meetingRepository.findAll();
@@ -54,10 +57,69 @@ public class MeetingService {
     }
 
     public Meeting createMeeting(MultipartFile audioFile) {
-        String audioUrl = s3Service.uploadFile(audioFile);
-        Meeting meeting = new Meeting();
-        meeting.setAudioUrl(audioUrl);
-        
+        File convertedFile;
+        try {
+            convertedFile = util.convertToMp3(audioFile);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("오디오 변환 실패", e);
+        }
+        String audioUrl = s3Service.uploadFile(convertedFile, "audio");
+        Long userId = util.getCurrentUserId();
+        User user = User.builder().id(userId).build();
+
+        MeetingDataDTO meetingData = fakeApi.aiApi();
+
+        String wordFileUrl = "";
+        try {   
+            String wordString = util.dataToWordString(meetingData);
+            File wordFile = util.stringToWordFile(wordString, meetingData.getMeetingSummary().getSubject() + ".docx");
+            wordFileUrl = s3Service.uploadFile(wordFile, "word");
+        } catch (IOException e) {
+            throw new RuntimeException("워드 파일 생성 실패", e);
+        }
+
+        Meeting meeting = Meeting.builder()
+                .title(meetingData.getMeetingSummary().getSubject())
+                .summary(meetingData.getMeetingSummary().getSummary())
+                .createdBy(user)
+                .user(user)
+                .audioUrl(audioUrl)
+                .wordFileUrl(wordFileUrl)
+                .build();
+
+        List<Schedule> schedules = meetingData.getSchedule().stream()
+                .map(schedule -> Schedule.builder()
+                        .title(schedule.getText())
+                        .meeting(meeting)
+                        .startDate(schedule.getStart())
+                        .endDate(schedule.getEnd())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<Todo> todos = meetingData.getTodo().stream()
+                .map(todo -> Todo.builder()
+                        .title(todo.getText())
+                        .meeting(meeting)
+                        .startDate(todo.getStart())
+                        .dueDate(todo.getEnd())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript().stream()
+                .map(transcript -> TranscriptLine.builder()
+                        .text(transcript.getText())
+                        .meeting(meeting)
+                        .startTime(transcript.getStart())
+                        .endTime(transcript.getEnd())
+                        .speaker(transcript.getSpeaker())
+                        .build())
+                .collect(Collectors.toList());
+
+        scheduleRepository.saveAll(schedules);
+        todoRepository.saveAll(todos);
+        transcriptLineRepository.saveAll(transcriptLines);
+        meetingRepository.save(meeting);
+
         return meeting;
     }
 
@@ -183,4 +245,4 @@ public class MeetingService {
         dto.setTasks(meeting.getTasks());
         return dto;
     }
-} 
+}

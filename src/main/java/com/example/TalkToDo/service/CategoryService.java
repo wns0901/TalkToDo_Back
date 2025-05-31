@@ -1,6 +1,7 @@
 package com.example.TalkToDo.service;
 
 import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.entity.User;
 import com.example.TalkToDo.repository.ScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,8 @@ public class CategoryService {
 
     @Transactional(readOnly = true)
     public List<String> getUserCategories(Long userId) {
-        List<Schedule> schedules = scheduleRepository.findByUserId(userId);
+        User user = User.builder().id(userId).build();
+        List<Schedule> schedules = scheduleRepository.findByUser(user);
         return schedules.stream()
                 .map(Schedule::getCategory)
                 .distinct()
@@ -36,10 +38,10 @@ public class CategoryService {
 
     @Transactional
     public void deleteUserCategory(Long userId, String category) {
-        // 해당 카테고리를 사용하는 일정이 있는지 확인
-        List<Schedule> schedules = scheduleRepository.findByUserIdAndCategory(userId, category);
+        User user = User.builder().id(userId).build();
+        List<Schedule> schedules = scheduleRepository.findByUserAndCategory(user, category);
         if (!schedules.isEmpty()) {
             throw new RuntimeException("Cannot delete category that is in use");
         }
     }
-} 
+}

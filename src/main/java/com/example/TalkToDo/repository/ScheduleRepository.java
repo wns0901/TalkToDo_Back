@@ -11,11 +11,18 @@ import java.util.List;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
-    List<Schedule> findByUserId(Long userId);
-    List<Schedule> findByUserIdAndStartDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
-    List<Schedule> findByUserIdAndStartDate(Long userId, LocalDate date);
-    List<Schedule> findByUserIdAndCategory(Long userId, String category);
-    List<Schedule> findByUserIdAndType(Long userId, String type);
-    List<Schedule> findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(User user, LocalDate date1, LocalDate date2);
+    List<Schedule> findByUser(User user);
+
+    List<Schedule> findByUserAndStartDateBetween(User user, LocalDate startDate, LocalDate endDate);
+
+    List<Schedule> findByUserAndStartDate(User user, LocalDate date);
+
+    List<Schedule> findByUserAndCategory(User user, String category);
+
+    List<Schedule> findByUserAndType(User user, String type);
+
+    List<Schedule> findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(User user,
+            LocalDate date1, LocalDate date2);
+
     void deleteByOriginalTodoId(Long todoId);
-} 
+}
