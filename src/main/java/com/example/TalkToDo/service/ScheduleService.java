@@ -56,7 +56,7 @@ public class ScheduleService {
     public ScheduleDTO updateSchedule(Long id, ScheduleDTO scheduleDTO) {
         Schedule existingSchedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
-        
+
         updateScheduleFromDTO(existingSchedule, scheduleDTO);
         Schedule updatedSchedule = scheduleRepository.save(existingSchedule);
         return convertToDTO(updatedSchedule);
@@ -70,7 +70,8 @@ public class ScheduleService {
 
     // 사용자의 모든 일정 조회
     public List<ScheduleDTO> getAllSchedulesByUserId(Long userId) {
-        return scheduleRepository.findByUserId(userId)
+        User user = User.builder().id(userId).build();
+        return scheduleRepository.findByUser(user)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -78,7 +79,8 @@ public class ScheduleService {
 
     // 기간별 일정 조회
     public List<ScheduleDTO> getSchedulesByDateRange(Long userId, LocalDate start, LocalDate end) {
-        return scheduleRepository.findByUserIdAndStartDateBetween(userId, start, end)
+        User user = User.builder().id(userId).build();
+        return scheduleRepository.findByUserAndStartDateBetween(user, start, end)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -86,7 +88,8 @@ public class ScheduleService {
 
     // 카테고리별 일정 조회
     public List<ScheduleDTO> getSchedulesByCategory(Long userId, String category) {
-        return scheduleRepository.findByUserIdAndCategory(userId, category)
+        User user = User.builder().id(userId).build();
+        return scheduleRepository.findByUserAndCategory(user, category)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -94,7 +97,8 @@ public class ScheduleService {
 
     // 할일 목록 조회
     public List<ScheduleDTO> getTodosByUserId(Long userId) {
-        return scheduleRepository.findByUserIdAndType(userId, "TODO")
+        User user = User.builder().id(userId).build();
+        return scheduleRepository.findByUserAndType(user, "TODO")
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -104,12 +108,13 @@ public class ScheduleService {
     @Transactional(readOnly = true)
     public List<ScheduleDTO> getSchedulesByDate(Long userId, LocalDate date) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
         return scheduleRepository
-            .findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date, date)
-            .stream()
-            .map(this::convertToDTO)
-            .collect(Collectors.toList());
+                .findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, date,
+                        date)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     // DTO를 Entity로 변환
@@ -152,9 +157,9 @@ public class ScheduleService {
     @Transactional
     public void addScheduleToUser(Long scheduleId, Long userId) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
-            .orElseThrow(() -> new RuntimeException("일정 없음"));
+                .orElseThrow(() -> new RuntimeException("일정 없음"));
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("유저 없음"));
+                .orElseThrow(() -> new RuntimeException("유저 없음"));
         schedule.setUser(user);
         scheduleRepository.save(schedule);
     }
@@ -164,21 +169,22 @@ public class ScheduleService {
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
-        return scheduleRepository.findByUserIdAndStartDateBetween(userId, startDate, endDate);
+        User user = User.builder().id(userId).build();
+        return scheduleRepository.findByUserAndStartDateBetween(user, startDate, endDate);
     }
 
     @Transactional
     public Schedule addTodoToCalendar(Long todoId, Schedule schedule) {
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
-        
+
         schedule.setTitle(todo.getTitle());
         schedule.setCategory("TODO");
         schedule.setType("TODO");
         schedule.setIsTodo(true);
         schedule.setOriginalTodoId(todoId);
         schedule.setDisplayInCalendar(true);
-        
+
         return scheduleRepository.save(schedule);
     }
 
@@ -186,4 +192,4 @@ public class ScheduleService {
     public void removeTodoFromCalendar(Long todoId) {
         scheduleRepository.deleteByOriginalTodoId(todoId);
     }
-} 
+}

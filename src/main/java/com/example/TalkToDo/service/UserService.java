@@ -74,12 +74,12 @@ public class UserService {
                 .map(user -> {
                     MyPageDTO myPageDTO = new MyPageDTO();
                     myPageDTO.setUser(user);
-                    
+
                     // 미팅 데이터
                     List<Meeting> meetings = meetingRepository.findByCreatedBy(user);
                     myPageDTO.setMeetings(meetings);
                     myPageDTO.setTotalMeetings(meetings.size());
-                    
+
                     // 할일 데이터
                     List<Todo> todos = todoRepository.findByAssignee(user);
                     myPageDTO.setTodos(todos);
@@ -87,13 +87,13 @@ public class UserService {
                     myPageDTO.setCompletedTodos(todos.stream()
                             .filter(todo -> "COMPLETED".equals(todo.getStatus()))
                             .count());
-                    
+
                     // 일정 데이터
-                    List<Schedule> schedules = scheduleRepository.findByUserId(userId);
+                    List<Schedule> schedules = scheduleRepository.findByUser(user);
                     myPageDTO.setSchedules(schedules);
                     myPageDTO.setTotalSchedules(schedules.size());
-                    
+
                     return myPageDTO;
                 });
     }
-} 
+}

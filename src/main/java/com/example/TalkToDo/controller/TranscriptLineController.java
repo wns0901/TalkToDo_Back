@@ -27,13 +27,6 @@ public class TranscriptLineController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/transcript/{transcriptId}")
-    public ResponseEntity<List<TranscriptLine>> getTranscriptLinesByTranscript(@PathVariable Long transcriptId) {
-        return transcriptLineService.getTranscriptLinesByTranscript(transcriptId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     @PostMapping
     public TranscriptLine createTranscriptLine(@RequestBody TranscriptLine transcriptLine) {
         return transcriptLineService.createTranscriptLine(transcriptLine);

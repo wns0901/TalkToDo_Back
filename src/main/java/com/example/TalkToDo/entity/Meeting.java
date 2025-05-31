@@ -30,16 +30,13 @@ public class Meeting extends BaseTimeEntity {
 
     private String audioFileUrl;
     private String transcriptFileUrl;
+    private String wordFileUrl;
 
     @ManyToOne
     @JoinColumn(name = "created_by")
     private User createdBy;
 
     private String audioUrl;
-
-    @OneToOne
-    @JoinColumn(name = "transcript_id")
-    private Transcript transcript;
 
     private boolean favorite;
 

@@ -5,13 +5,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import com.example.TalkToDo.repository.ScheduleRepository;
 import com.example.TalkToDo.repository.UserRepository;
+import com.example.TalkToDo.entity.Schedule;
+import java.util.List;
 
 @SpringBootTest
 public class test {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private ScheduleRepository scheduleRepository;
 
   @Autowired
   private PasswordEncoder passwordEncoder;
@@ -50,5 +57,16 @@ public class test {
       user.setPassword(passwordEncoder.encode("1234"));
       userRepository.save(user);
     }
+  }
+
+  @Test
+  public void test2() {
+    User user = User.builder()
+      .id(1L)
+      .build();
+
+    List<Schedule> schedules = scheduleRepository.findByUser(user);
+    System.out.println(schedules);
+    System.out.println("테스트 성공-----------------------");
   }
 }
