@@ -1,17 +1,23 @@
 package com.example.TalkToDo.controller;
 
-import com.example.TalkToDo.dto.ScheduleDTO;
+
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.example.TalkToDo.config.security.PrincipalDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/todos")
 public class TodoController {
+    private static final Logger logger = LoggerFactory.getLogger(TodoController.class);
 
     @Autowired
     private TodoService todoService;
@@ -93,5 +99,36 @@ public class TodoController {
     @PutMapping("/{id}/restore")
     public Todo restoreTodo(@PathVariable Long id) {
         return todoService.restoreTodo(id);
+    }
+
+    // 사용자의 모든 할일 조회
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<Todo>> getTodosByUser(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        logger.info("Request to get todos for user {} by user {}", 
+            userId, principalDetails.getUser().getId());
+            
+        // 현재 로그인한 사용자와 요청한 userId가 일치하는지 확인
+        if (principalDetails == null || principalDetails.getUser() == null) {
+            logger.warn("Access denied: No authenticated user");
+            return ResponseEntity.status(403).build();
+        }
+
+        if (!principalDetails.getUser().getId().equals(userId)) {
+            logger.warn("Access denied: User {} tried to access todos for user {}", 
+                principalDetails.getUser().getId(), userId);
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            return todoService.getTodosByAssignee(userId)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            logger.error("Error getting todos for user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
     }
 } 

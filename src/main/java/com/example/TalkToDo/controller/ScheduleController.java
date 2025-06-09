@@ -3,12 +3,15 @@ package com.example.TalkToDo.controller;
 import com.example.TalkToDo.dto.ScheduleDTO;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.service.ScheduleService;
+import com.example.TalkToDo.config.security.PrincipalDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.User;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,7 +39,13 @@ public class ScheduleController {
 
     // 일정 생성
     @PostMapping
-    public ResponseEntity<ScheduleDTO> createSchedule(@RequestBody ScheduleDTO scheduleDTO) {
+    public ResponseEntity<ScheduleDTO> createSchedule(
+            @RequestBody ScheduleDTO scheduleDTO,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || principalDetails.getUser() == null) {
+            return ResponseEntity.status(403).build();
+        }
+        scheduleDTO.setUserId(principalDetails.getUser().getId().toString());
         return ResponseEntity.ok(scheduleService.createSchedule(scheduleDTO));
     }
 

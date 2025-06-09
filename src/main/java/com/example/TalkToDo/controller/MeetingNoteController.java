@@ -2,18 +2,20 @@ package com.example.TalkToDo.controller;
 
 import com.example.TalkToDo.entity.MeetingNote;
 import com.example.TalkToDo.service.MeetingNoteService;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/meeting-notes")
 public class MeetingNoteController {
 
-    @Autowired
-    private MeetingNoteService meetingNoteService;
+    private final MeetingNoteService meetingNoteService;
 
     @GetMapping
     public List<MeetingNote> getAllMeetingNotes() {

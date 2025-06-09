@@ -5,7 +5,9 @@ import com.example.TalkToDo.dto.MeetingDTO;
 import com.example.TalkToDo.dto.MeetingNotesDTO;
 import com.example.TalkToDo.dto.TranscriptLineDTO;
 import com.example.TalkToDo.service.MeetingService;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,11 +16,11 @@ import org.springframework.http.MediaType;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/meetings")
 public class MeetingController {
 
-    @Autowired
-    private MeetingService meetingService;
+    private final MeetingService meetingService;
 
     @GetMapping
     public List<Meeting> getAllMeetings() {
