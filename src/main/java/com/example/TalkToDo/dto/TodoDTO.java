@@ -1,15 +1,16 @@
 package com.example.TalkToDo.dto;
 
+import java.time.LocalDate;
+
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 public class TodoDTO {
     private Long id;
     private String text;
     private String type;
-    private LocalDateTime startDate;
-    private LocalDateTime dueDate;
+    private LocalDate startDate;
+    private LocalDate dueDate;
     private String assignee;
     private String status;
     private boolean schedule;

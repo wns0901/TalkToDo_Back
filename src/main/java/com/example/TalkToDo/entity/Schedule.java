@@ -28,8 +28,8 @@ public class Schedule extends BaseTimeEntity {
 
     private String type;
     private String title;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private String category;
     private boolean displayInCalendar;
     @Column(nullable = false)

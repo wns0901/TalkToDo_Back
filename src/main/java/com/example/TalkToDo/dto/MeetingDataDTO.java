@@ -45,8 +45,8 @@ public class MeetingDataDTO {
     @AllArgsConstructor
     @Builder
     public static class Schedule {
-        private LocalDate start;
-        private LocalDate end;
+        private LocalDateTime start;
+        private LocalDateTime end;
         private String text;
     }
 
@@ -55,8 +55,8 @@ public class MeetingDataDTO {
     @AllArgsConstructor
     @Builder
     public static class Todo {
-        private LocalDateTime start;
-        private LocalDateTime end;
+        private LocalDate start;
+        private LocalDate end;
         private String text;
     }
 }

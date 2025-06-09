@@ -25,8 +25,9 @@ import com.example.TalkToDo.repository.ScheduleRepository;
 import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.TranscriptLineRepository;
 import com.example.TalkToDo.repository.UserRepository;
-import com.example.TalkToDo.util.FakeApi;
+// import com.example.TalkToDo.util.FakeApi;
 import com.example.TalkToDo.util.Util;
+import com.example.TalkToDo.util.Api;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,11 +38,12 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    private final FakeApi fakeApi;
+    // private final FakeApi fakeApi;
     private final Util util;
     private final ScheduleRepository scheduleRepository;
     private final TodoRepository todoRepository;
     private final TranscriptLineRepository transcriptLineRepository;
+    private final Api api;
 
     public List<Meeting> getAllMeetings() {
         return meetingRepository.findAll();
@@ -67,10 +69,11 @@ public class MeetingService {
         Long userId = util.getCurrentUserId();
         User user = User.builder().id(userId).build();
 
-        MeetingDataDTO meetingData = fakeApi.aiApi();
+        // MeetingDataDTO meetingData = fakeApi.aiApi();
+        MeetingDataDTO meetingData = api.getMeetingData(audioFile);
 
         String wordFileUrl = "";
-        try {   
+        try {
             String wordString = util.dataToWordString(meetingData);
             File wordFile = util.stringToWordFile(wordString, meetingData.getMeetingSummary().getSubject() + ".docx");
             wordFileUrl = s3Service.uploadFile(wordFile, "word");
@@ -115,10 +118,12 @@ public class MeetingService {
                         .build())
                 .collect(Collectors.toList());
 
+                System.out.println("Test:-----------------");
+        System.out.println(schedules);
+        meetingRepository.save(meeting);
         scheduleRepository.saveAll(schedules);
         todoRepository.saveAll(todos);
         transcriptLineRepository.saveAll(transcriptLines);
-        meetingRepository.save(meeting);
 
         return meeting;
     }

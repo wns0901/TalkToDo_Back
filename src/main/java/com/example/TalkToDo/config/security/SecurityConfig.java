@@ -56,7 +56,8 @@ public class SecurityConfig {
     // 경로별 인가 설정
     http
         .authorizeHttpRequests(auth -> auth
-            .anyRequest().permitAll());
+            .requestMatchers("/auth", "/auth/**", "/login", "/api/users", "/api/users/**").permitAll()
+            .anyRequest().authenticated());
 
     // 세션 설정
     http

@@ -12,8 +12,8 @@ public class ScheduleDTO {
     private Long id;
     private String userId;
     private String title;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private String category;
     private String type;
     private boolean displayInCalendar;
