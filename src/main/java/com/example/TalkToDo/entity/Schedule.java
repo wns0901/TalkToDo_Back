@@ -3,7 +3,7 @@ package com.example.TalkToDo.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 @Data
@@ -28,8 +28,13 @@ public class Schedule extends BaseTimeEntity {
 
     private String type;
     private String title;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate startDate;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
+    
     private String category;
     private boolean displayInCalendar;
     @Column(nullable = false)
@@ -47,8 +52,10 @@ public class Schedule extends BaseTimeEntity {
 
     private String description;
 
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalDateTime startTime;
 
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalDateTime endTime;
 
     private String location;
