@@ -100,8 +100,8 @@ public class MeetingService {
                 .map(schedule -> Schedule.builder()
                         .title(schedule.getText())
                         .meeting(meeting)
-                        .startDate(schedule.getStart())
-                        .endDate(schedule.getEnd())
+                        .startDate(schedule.getStart().toLocalDate())
+                        .endDate(schedule.getEnd().toLocalDate())
                         .build())
                 .collect(Collectors.toList());
 
