@@ -58,7 +58,7 @@ public class MeetingService {
                 .map(user -> meetingRepository.findByCreatedBy(user));
     }
 
-    public Meeting createMeeting(MultipartFile audioFile) {
+    public Meeting createMeeting(MultipartFile audioFile, String date) {
         File convertedFile;
         try {
             convertedFile = util.convertToMp3(audioFile);
@@ -70,7 +70,7 @@ public class MeetingService {
         User user = User.builder().id(userId).build();
 
         // MeetingDataDTO meetingData = fakeApi.aiApi();
-        MeetingDataDTO meetingData = api.getMeetingData(audioFile);
+        MeetingDataDTO meetingData = api.getMeetingData(audioFile, date);
 
         String wordFileUrl = "";
         try {

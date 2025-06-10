@@ -39,8 +39,9 @@ public class MeetingController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Meeting createMeeting(
-            @RequestPart("audioFile") MultipartFile audioFile) {
-        return meetingService.createMeeting(audioFile);
+            @RequestPart("audioFile") MultipartFile audioFile,
+            @RequestPart("date") String date) {
+        return meetingService.createMeeting(audioFile, date);
     }
 
     @PutMapping("/{id}")

@@ -20,11 +20,9 @@ public class TranscriptLineController {
         return transcriptLineService.getAllTranscriptLines();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TranscriptLine> getTranscriptLineById(@PathVariable Long id) {
-        return transcriptLineService.getTranscriptLineById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/{meetingId}")
+    public ResponseEntity<List<TranscriptLine>> getTranscriptLineById(@PathVariable Long meetingId) {
+        return ResponseEntity.ok(transcriptLineService.getTranscriptLineById(meetingId));
     }
 
     @PostMapping
