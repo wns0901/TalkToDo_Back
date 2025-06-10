@@ -29,12 +29,8 @@ public class TranscriptLineService {
         return transcriptLineRepository.save(transcriptLine);
     }
 
-    public Optional<TranscriptLine> updateTranscriptLine(Long id, TranscriptLine transcriptLineDetails) {
-        return transcriptLineRepository.findById(id)
-                .map(existingLine -> {
-                    transcriptLineDetails.setId(id);
-                    return transcriptLineRepository.save(transcriptLineDetails);
-                });
+    public List<TranscriptLine> updateTranscriptLine(List<TranscriptLine> transcriptLineList) {
+        return transcriptLineRepository.saveAll(transcriptLineList);
     }
 
     @Transactional

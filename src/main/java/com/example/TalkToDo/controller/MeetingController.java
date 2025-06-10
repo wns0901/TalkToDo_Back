@@ -20,14 +20,14 @@ public class MeetingController {
     @Autowired
     private MeetingService meetingService;
 
-    @GetMapping
-    public List<Meeting> getAllMeetings() {
-        return meetingService.getAllMeetings();
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<MeetingDTO> getMeetingDetails(@PathVariable Long id) {
         return ResponseEntity.ok(meetingService.getMeetingDetails(id));
+    }
+
+    @GetMapping("/{id}/audio")
+    public ResponseEntity<String> getAudio(@PathVariable Long id) {
+        return ResponseEntity.ok(meetingService.getAudio(id));
     }
 
     @GetMapping("/user/{userId}")
