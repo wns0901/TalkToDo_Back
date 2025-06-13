@@ -59,6 +59,12 @@ public class MeetingService {
                 .map(user -> meetingRepository.findByCreatedBy(user));
     }
 
+    public String getAudio(Long id) {
+        Meeting meeting = meetingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+        return meeting.getAudioUrl();
+    }
+
     public Meeting createMeeting(MultipartFile audioFile, String date) {
         File convertedFile;
         try {
