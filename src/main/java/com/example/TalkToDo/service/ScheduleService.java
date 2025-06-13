@@ -121,13 +121,28 @@ public class ScheduleService {
     public Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
         schedule.setId(dto.getId());
-        schedule.setUserId(dto.getUserId());
         schedule.setTitle(dto.getTitle());
         schedule.setStartDate(dto.getStartDate());
         schedule.setEndDate(dto.getEndDate());
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
+        schedule.setIsTodo(dto.isTodo());
+        schedule.setOriginalTodoId(dto.getOriginalTodoId());
+        schedule.setScope(dto.getScope());
+        schedule.setDescription(dto.getDescription());
+        schedule.setLocation(dto.getLocation());
+        schedule.setColor(dto.getColor());
+
+        // startTime과 endTime 직접 설정
+        schedule.setStartTime(dto.getStartTime());
+        schedule.setEndTime(dto.getEndTime());
+
+        if (dto.getUserId() != null) {
+            User user = userRepository.findById(Long.parseLong(dto.getUserId()))
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            schedule.setUser(user);
+        }
         return schedule;
     }
 
@@ -141,6 +156,21 @@ public class ScheduleService {
         dto.setCategory(schedule.getCategory());
         dto.setType(schedule.getType());
         dto.setDisplayInCalendar(schedule.isDisplayInCalendar());
+        dto.setIsTodo(schedule.isTodo());
+        dto.setOriginalTodoId(schedule.getOriginalTodoId());
+        dto.setScope(schedule.getScope());
+        dto.setDescription(schedule.getDescription());
+        dto.setLocation(schedule.getLocation());
+        dto.setColor(schedule.getColor());
+
+        // startTime과 endTime 직접 설정
+        dto.setStartTime(schedule.getStartTime());
+        dto.setEndTime(schedule.getEndTime());
+
+        if (schedule.getUser() != null) {
+            dto.setUserId(schedule.getUser().getId().toString());
+            dto.setUserName(schedule.getUser().getName());
+        }
         return dto;
     }
 
@@ -152,6 +182,14 @@ public class ScheduleService {
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
+        schedule.setLocation(dto.getLocation());
+        schedule.setDescription(dto.getDescription());
+        schedule.setColor(dto.getColor());
+        schedule.setScope(dto.getScope());
+        schedule.setStartTime(dto.getStartTime());
+        schedule.setEndTime(dto.getEndTime());
+        schedule.setIsTodo(dto.isTodo());
+        schedule.setOriginalTodoId(dto.getOriginalTodoId());
     }
 
     @Transactional

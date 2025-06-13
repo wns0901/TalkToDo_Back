@@ -2,9 +2,10 @@ package com.example.TalkToDo.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import com.example.TalkToDo.converter.LocalTimeConverter;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -52,11 +53,13 @@ public class Schedule extends BaseTimeEntity {
 
     private String description;
 
+    @Convert(converter = LocalTimeConverter.class)
     @JsonFormat(pattern = "HH:mm:ss")
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
+    @Convert(converter = LocalTimeConverter.class)
     @JsonFormat(pattern = "HH:mm:ss")
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
     private String location;
 

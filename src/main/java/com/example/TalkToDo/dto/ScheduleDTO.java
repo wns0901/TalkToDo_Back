@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -29,12 +29,20 @@ public class ScheduleDTO {
     private String description;
     
     @JsonFormat(pattern = "HH:mm:ss")
-    private LocalDateTime startTime;
+    private LocalTime startTime;
     
     @JsonFormat(pattern = "HH:mm:ss")
-    private LocalDateTime endTime;
+    private LocalTime endTime;
     
     private String userName;
     private String location;
     private String color;
+
+    public boolean isTodo() {
+        return isTodo;
+    }
+
+    public void setIsTodo(boolean isTodo) {
+        this.isTodo = isTodo;
+    }
 } 
