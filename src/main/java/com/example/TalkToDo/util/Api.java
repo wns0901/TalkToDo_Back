@@ -27,12 +27,13 @@ public class Api {
   @Value("${api.url}")
   private String aiServerUrl;
 
-  public MeetingDataDTO getMeetingData(MultipartFile audioFile, String date) {
+  public MeetingDataDTO getMeetingData(MultipartFile audioFile, String date, Long userId) {
     try {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
       body.add("audio",
           new MultipartInputStreamFileResource(audioFile.getInputStream(), audioFile.getOriginalFilename()));
-      body.add("date", date);
+      body.add("meeting_date", date);
+      body.add("user_id", userId);
       HttpHeaders headers = new HttpHeaders();
       headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 

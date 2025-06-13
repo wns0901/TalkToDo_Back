@@ -18,7 +18,7 @@ public class MeetingDataDTO {
     private MeetingSummary meetingSummary;
     private List<MeetingTranscript> meetingTranscript;
     private List<Schedule> schedule;
-    private List<Todo> todo;
+    private List<Todo> todos;
 
     @Data
     @NoArgsConstructor

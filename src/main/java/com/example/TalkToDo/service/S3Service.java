@@ -5,20 +5,30 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
+import com.amazonaws.util.IOUtils;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 
 import lombok.RequiredArgsConstructor;
+import java.net.URL;
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 public class S3Service {
 
-  private final AmazonS3Client amazonS3Client;
+  private final AmazonS3 s3Client;
 
   @Value("${cloud.aws.s3.bucket}")
   private String bucket;
@@ -26,47 +36,51 @@ public class S3Service {
   @Value("${cloud.aws.region.static}")
   private String region;
 
-  public String uploadFile(File file, String folder) {
-    try {
-      String fileName = addTimestampToFilename(file.getName());
-      String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8);
-      String fileUrl = "https://" + bucket + ".s3." + region + ".amazonaws.com/" + folder + "/"
-          + encodedFileName;
-
-      ObjectMetadata metadata = new ObjectMetadata();
-
-      // content-type을 파일 확장자에 따라 지정 (예: mp3)
-      String contentType = "application/octet-stream";
-      if (fileName.endsWith(".mp3")) {
-        contentType = "audio/mpeg";
-      }
-      metadata.setContentType(contentType);
-      metadata.setContentLength(file.length());
-
-      try (FileInputStream fis = new FileInputStream(file)) {
-        amazonS3Client.putObject(bucket, "audio" + "/" + fileName, fis, metadata);
-      }
-
-      return fileUrl;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return "";
+  private String createFileName(String originalFileName, String dirName) {
+    return dirName + "/" + UUID.randomUUID() + "_" + originalFileName;
   }
 
-  private String addTimestampToFilename(String filename) {
-    String timestamp = String.valueOf(System.currentTimeMillis());
-    int lastDotIndex = filename.lastIndexOf(".");
-    if (lastDotIndex == -1) {
-      return filename + "_" + timestamp;
-    } else {
-      return filename.substring(0, lastDotIndex) + "_" + timestamp + filename.substring(lastDotIndex);
+  public String uploadFile(File file, String dirName) {
+    String fileName = createFileName(file.getName(), dirName);
+    ObjectMetadata metadata = new ObjectMetadata();
+    metadata.setContentType("application/octet-stream");
+    metadata.setContentLength(file.length());
+
+    try {
+      PutObjectRequest putObjectRequest = new PutObjectRequest(bucket, fileName, file)
+          .withCannedAcl(CannedAccessControlList.PublicRead);
+      s3Client.putObject(putObjectRequest);
+      return s3Client.getUrl(bucket, fileName).toString();
+    } catch (Exception e) {
+      throw new RuntimeException("파일 업로드 실패", e);
+    }
+  }
+
+  public String getTemporaryUrl(String fileUrl) {
+    String key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+    Date expiration = new Date();
+    long expTimeMillis = expiration.getTime();
+    expTimeMillis += 1000 * 60 * 60; // 1시간
+    expiration.setTime(expTimeMillis);
+
+    URL url = s3Client.generatePresignedUrl(bucket, key, expiration);
+    return url.toString();
+  }
+
+  public byte[] downloadFile(String fileUrl) {
+    String key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+    S3Object s3Object = s3Client.getObject(bucket, key);
+    S3ObjectInputStream inputStream = s3Object.getObjectContent();
+    try {
+      return IOUtils.toByteArray(inputStream);
+    } catch (IOException e) {
+      throw new RuntimeException("Error downloading file from S3", e);
     }
   }
 
   public void deleteFile(String url) {
     String fileName = url.substring(54);
     String decodedFileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8);
-    amazonS3Client.deleteObject(bucket, decodedFileName);
+    s3Client.deleteObject(bucket, decodedFileName);
   }
 }

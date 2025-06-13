@@ -2,6 +2,7 @@ package com.example.TalkToDo.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public class MeetingService {
         User user = User.builder().id(userId).build();
 
         // MeetingDataDTO meetingData = fakeApi.aiApi();
-        MeetingDataDTO meetingData = api.getMeetingData(audioFile, date);
+        MeetingDataDTO meetingData = api.getMeetingData(audioFile, date, userId);
 
         String wordFileUrl = "";
         try {
@@ -90,36 +91,36 @@ public class MeetingService {
                 .wordFileUrl(wordFileUrl)
                 .build();
 
-        List<Schedule> schedules = meetingData.getSchedule().stream()
+        List<Schedule> schedules = meetingData.getSchedule() != null ? meetingData.getSchedule().stream()
                 .map(schedule -> Schedule.builder()
                         .title(schedule.getText())
                         .meeting(meeting)
                         .startDate(schedule.getStart())
                         .endDate(schedule.getEnd())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : new ArrayList<>();
 
-        List<Todo> todos = meetingData.getTodo().stream()
+        List<Todo> todos = meetingData.getTodos() != null ? meetingData.getTodos().stream()
                 .map(todo -> Todo.builder()
                         .title(todo.getText())
                         .meeting(meeting)
                         .startDate(todo.getStart())
                         .dueDate(todo.getEnd())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : new ArrayList<>();
 
-        List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript().stream()
-                .map(transcript -> TranscriptLine.builder()
-                        .text(transcript.getText())
-                        .meeting(meeting)
-                        .startTime(transcript.getStart())
-                        .endTime(transcript.getEnd())
-                        .speaker(transcript.getSpeaker())
-                        .build())
-                .collect(Collectors.toList());
+        List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript() != null
+                ? meetingData.getMeetingTranscript().stream()
+                        .map(transcript -> TranscriptLine.builder()
+                                .text(transcript.getText())
+                                .meeting(meeting)
+                                .startTime(transcript.getStart())
+                                .endTime(transcript.getEnd())
+                                .speaker(transcript.getSpeaker())
+                                .build())
+                        .collect(Collectors.toList())
+                : new ArrayList<>();
 
-                System.out.println("Test:-----------------");
-        System.out.println(schedules);
         meetingRepository.save(meeting);
         scheduleRepository.saveAll(schedules);
         todoRepository.saveAll(todos);
