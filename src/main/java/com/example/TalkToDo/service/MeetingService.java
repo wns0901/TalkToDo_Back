@@ -2,6 +2,7 @@ package com.example.TalkToDo.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,18 +17,20 @@ import com.example.TalkToDo.dto.MeetingNotesDTO;
 import com.example.TalkToDo.dto.TodoDTO;
 import com.example.TalkToDo.dto.TranscriptLineDTO;
 import com.example.TalkToDo.entity.Meeting;
+import com.example.TalkToDo.entity.MeetingNote;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.entity.TranscriptLine;
 import com.example.TalkToDo.entity.User;
+import com.example.TalkToDo.repository.MeetingNoteRepository;
 import com.example.TalkToDo.repository.MeetingRepository;
 import com.example.TalkToDo.repository.ScheduleRepository;
 import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.TranscriptLineRepository;
 import com.example.TalkToDo.repository.UserRepository;
+import com.example.TalkToDo.util.Api;
 // import com.example.TalkToDo.util.FakeApi;
 import com.example.TalkToDo.util.Util;
-import com.example.TalkToDo.util.Api;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,7 +41,7 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    // private final FakeApi fakeApi;
+    private final MeetingNoteRepository meetingNoteRepository;
     private final Util util;
     private final ScheduleRepository scheduleRepository;
     private final TodoRepository todoRepository;
@@ -76,7 +79,7 @@ public class MeetingService {
         User user = User.builder().id(userId).build();
 
         // MeetingDataDTO meetingData = fakeApi.aiApi();
-        MeetingDataDTO meetingData = api.getMeetingData(audioFile, date);
+        MeetingDataDTO meetingData = api.getMeetingData(audioFile, date, userId);
 
         String wordFileUrl = "";
         try {
@@ -96,40 +99,47 @@ public class MeetingService {
                 .wordFileUrl(wordFileUrl)
                 .build();
 
-        List<Schedule> schedules = meetingData.getSchedule().stream()
+        MeetingNote meetingNote = MeetingNote.builder()
+                .title(meetingData.getMeetingSummary().getSubject())
+                .content(meetingData.getMeetingSummary().getSummary())
+                .meeting(meeting)
+                .build();
+
+        List<Schedule> schedules = meetingData.getSchedule() != null ? meetingData.getSchedule().stream()
                 .map(schedule -> Schedule.builder()
                         .title(schedule.getText())
                         .meeting(meeting)
                         .startDate(schedule.getStart().toLocalDate())
                         .endDate(schedule.getEnd().toLocalDate())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : new ArrayList<>();
 
-        List<Todo> todos = meetingData.getTodo().stream()
+        List<Todo> todos = meetingData.getTodos() != null ? meetingData.getTodos().stream()
                 .map(todo -> Todo.builder()
                         .title(todo.getText())
                         .meeting(meeting)
                         .startDate(todo.getStart())
                         .dueDate(todo.getEnd())
                         .build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()) : new ArrayList<>();
 
-        List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript().stream()
-                .map(transcript -> TranscriptLine.builder()
-                        .text(transcript.getText())
-                        .meeting(meeting)
-                        .startTime(transcript.getStart())
-                        .endTime(transcript.getEnd())
-                        .speaker(transcript.getSpeaker())
-                        .build())
-                .collect(Collectors.toList());
+        List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript() != null
+                ? meetingData.getMeetingTranscript().stream()
+                        .map(transcript -> TranscriptLine.builder()
+                                .text(transcript.getText())
+                                .meeting(meeting)
+                                .startTime(transcript.getStart())
+                                .endTime(transcript.getEnd())
+                                .speaker(transcript.getSpeaker())
+                                .build())
+                        .collect(Collectors.toList())
+                : new ArrayList<>();
 
-                System.out.println("Test:-----------------");
-        System.out.println(schedules);
         meetingRepository.save(meeting);
         scheduleRepository.saveAll(schedules);
         todoRepository.saveAll(todos);
         transcriptLineRepository.saveAll(transcriptLines);
+        meetingNoteRepository.save(meetingNote);
 
         return meeting;
     }
@@ -255,5 +265,11 @@ public class MeetingService {
         dto.setSummary(meeting.getSummary());
         dto.setTasks(meeting.getTasks());
         return dto;
+    }
+
+    public String getDocx(Long meetingId) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+        return meeting.getWordFileUrl();
     }
 }

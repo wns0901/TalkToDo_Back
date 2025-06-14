@@ -28,8 +28,6 @@ class TalkToDoApplicationTests {
 		user.setRole("test");
 		userRepository.save(user);
 
-		User user2 = userRepository.findById(user.getId()).orElseThrow(() -> new RuntimeException("User not found"));
-		System.out.println(user2.getName());
 	}
 
 }

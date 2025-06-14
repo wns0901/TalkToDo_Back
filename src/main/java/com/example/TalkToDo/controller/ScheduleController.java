@@ -1,21 +1,32 @@
 package com.example.TalkToDo.controller;
 
-import com.example.TalkToDo.dto.ScheduleDTO;
-import com.example.TalkToDo.entity.Schedule;
-import com.example.TalkToDo.service.ScheduleService;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 import com.example.TalkToDo.config.security.PrincipalDetails;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.service.ScheduleService;
+
 
 @RestController
 @RequestMapping("/api/schedules")
@@ -135,5 +146,21 @@ public class ScheduleController {
     public ResponseEntity<?> removeTodoFromCalendar(@PathVariable Long todoId) {
         scheduleService.removeTodoFromCalendar(todoId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/meeting/{meetingId}")
+    public ResponseEntity<List<ScheduleDTO>> getSchedulesByMeetingId(@PathVariable Long meetingId) {
+        List<Schedule> schedules = scheduleService.getSchedulesByMeetingId(meetingId);
+        List<ScheduleDTO> scheduleDTOs = schedules.stream()
+                .map(scheduleService::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(scheduleDTOs);
+    }
+    
+    @PatchMapping("/meeting/{id}")
+    public ResponseEntity<?> updateScheduleInMeeting(@PathVariable Long id, @RequestBody ScheduleDTO scheduleDTO) {
+        Schedule res = scheduleService.updateScheduleInMeeting(id, scheduleDTO);
+        ScheduleDTO resDTO = scheduleService.convertToDTO(res);
+        return ResponseEntity.ok(resDTO);
     }
 } 

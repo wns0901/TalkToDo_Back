@@ -37,4 +37,5 @@ public class ScheduleDTO {
     private String userName;
     private String location;
     private String color;
+    private Long meetingId;
 } 

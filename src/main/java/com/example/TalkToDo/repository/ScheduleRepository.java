@@ -1,13 +1,14 @@
 package com.example.TalkToDo.repository;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.entity.User;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
@@ -25,4 +26,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             LocalDate date1, LocalDate date2);
 
     void deleteByOriginalTodoId(Long todoId);
+
+    List<Schedule> findByMeeting(Meeting meeting);
 }

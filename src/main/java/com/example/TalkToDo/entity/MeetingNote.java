@@ -25,5 +25,7 @@ public class MeetingNote extends BaseTimeEntity {
     private Meeting meeting;
 
     private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String content;
 } 
