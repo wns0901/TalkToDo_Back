@@ -17,18 +17,20 @@ import com.example.TalkToDo.dto.MeetingNotesDTO;
 import com.example.TalkToDo.dto.TodoDTO;
 import com.example.TalkToDo.dto.TranscriptLineDTO;
 import com.example.TalkToDo.entity.Meeting;
+import com.example.TalkToDo.entity.MeetingNote;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.entity.TranscriptLine;
 import com.example.TalkToDo.entity.User;
+import com.example.TalkToDo.repository.MeetingNoteRepository;
 import com.example.TalkToDo.repository.MeetingRepository;
 import com.example.TalkToDo.repository.ScheduleRepository;
 import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.TranscriptLineRepository;
 import com.example.TalkToDo.repository.UserRepository;
+import com.example.TalkToDo.util.Api;
 // import com.example.TalkToDo.util.FakeApi;
 import com.example.TalkToDo.util.Util;
-import com.example.TalkToDo.util.Api;
 
 import lombok.RequiredArgsConstructor;
 
@@ -39,7 +41,7 @@ public class MeetingService {
     private final MeetingRepository meetingRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
-    // private final FakeApi fakeApi;
+    private final MeetingNoteRepository meetingNoteRepository;
     private final Util util;
     private final ScheduleRepository scheduleRepository;
     private final TodoRepository todoRepository;
@@ -97,6 +99,12 @@ public class MeetingService {
                 .wordFileUrl(wordFileUrl)
                 .build();
 
+        MeetingNote meetingNote = MeetingNote.builder()
+                .title(meetingData.getMeetingSummary().getSubject())
+                .content(meetingData.getMeetingSummary().getSummary())
+                .meeting(meeting)
+                .build();
+
         List<Schedule> schedules = meetingData.getSchedule() != null ? meetingData.getSchedule().stream()
                 .map(schedule -> Schedule.builder()
                         .title(schedule.getText())
@@ -131,6 +139,7 @@ public class MeetingService {
         scheduleRepository.saveAll(schedules);
         todoRepository.saveAll(todos);
         transcriptLineRepository.saveAll(transcriptLines);
+        meetingNoteRepository.save(meetingNote);
 
         return meeting;
     }
