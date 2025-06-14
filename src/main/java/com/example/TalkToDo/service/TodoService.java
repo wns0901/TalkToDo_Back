@@ -1,7 +1,7 @@
 package com.example.TalkToDo.service;
 
 import com.example.TalkToDo.entity.Todo;
-import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.dto.TodoDTO;
 import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.User;
 import com.example.TalkToDo.entity.Schedule;
@@ -56,6 +56,54 @@ public class TodoService {
 
     public Todo createTodo(Todo todo) {
         return todoRepository.save(todo);
+    }
+
+    // Todo 엔티티를 DTO로 변환
+    public TodoDTO convertToDTO(Todo todo) {
+        TodoDTO dto = new TodoDTO();
+        dto.setId(todo.getId());
+        dto.setTitle(todo.getTitle());
+        dto.setType(todo.getType());
+        dto.setStartDate(todo.getStartDate());
+        dto.setDueDate(todo.getDueDate());
+        dto.setStatus(todo.getStatus());
+        dto.setSchedule(todo.isSchedule());
+        
+        if (todo.getAssignee() != null) {
+            dto.setAssigneeId(todo.getAssignee().getId().toString());
+            dto.setAssigneeName(todo.getAssignee().getName());
+        }
+        
+        if (todo.getMeeting() != null) {
+            dto.setMeetingId(todo.getMeeting().getId());
+        }
+        
+        return dto;
+    }
+
+    // DTO를 Todo 엔티티로 변환
+    public Todo convertToEntity(TodoDTO dto) {
+        Todo todo = new Todo();
+        todo.setId(dto.getId());
+        todo.setTitle(dto.getTitle());
+        todo.setType(dto.getType());
+        todo.setStartDate(dto.getStartDate());
+        todo.setDueDate(dto.getDueDate());
+        todo.setStatus(dto.getStatus());
+        
+        if (dto.getAssigneeId() != null) {
+            User assignee = userRepository.findById(Long.parseLong(dto.getAssigneeId()))
+                    .orElseThrow(() -> new RuntimeException("Assignee not found"));
+            todo.setAssignee(assignee);
+        }
+        
+        if (dto.getMeetingId() != null) {
+            Meeting meeting = meetingRepository.findById(dto.getMeetingId())
+                    .orElseThrow(() -> new RuntimeException("Meeting not found"));
+            todo.setMeeting(meeting);
+        }
+        
+        return todo;
     }
 
     @Transactional

@@ -22,7 +22,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByUserAndType(User user, String type);
 
     List<Schedule> findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(User user,
-            LocalDate date1, LocalDate date2);
+            LocalDate startDate, LocalDate endDate);
 
     void deleteByOriginalTodoId(Long todoId);
 }
