@@ -1,6 +1,7 @@
 package com.example.TalkToDo.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
+
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -11,32 +12,45 @@ import com.example.TalkToDo.dto.EmailDTO;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
-import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-  @Autowired
-  private JavaMailSender mailSender;
+  private final MeetingService meetingService;
+  private final S3Service s3Service;
+  private final JavaMailSender mailSender;
 
   public void sendEmail(EmailDTO emailDTO) throws MessagingException, IOException {
-    MimeMessage message = mailSender.createMimeMessage();
-    MimeMessageHelper helper = new MimeMessageHelper(message, true);
+    String docxUrl = meetingService.getDocx(emailDTO.getMeetingId());
 
-    helper.setFrom(new InternetAddress("crewdock0@gmail.com", emailDTO.getFrom()));
-    helper.setTo(emailDTO.getTo());
-    helper.setSubject(emailDTO.getSubject());
-    helper.setText(emailDTO.getText());
+    byte[] docxBytes = s3Service.downloadFile(docxUrl);
 
-    // 첨부파일 추가
-    if (emailDTO.getAttachments() != null) {
-      for (MultipartFile file : emailDTO.getAttachments()) {
-        if (file != null && !file.isEmpty()) {
-          helper.addAttachment(file.getOriginalFilename(), file);
-        }
+    // 각 수신자에게 개별적으로 이메일 전송
+    for (String recipient : emailDTO.getToList()) {
+      MimeMessage message = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+      helper.setFrom(new InternetAddress(emailDTO.getFrom(), emailDTO.getFrom()));
+      helper.setTo(recipient);
+      helper.setSubject(emailDTO.getSubject());
+      helper.setText(emailDTO.getText());
+
+      // S3에서 다운로드한 docx 파일 첨부
+      if (docxBytes != null && docxBytes.length > 0) {
+        org.springframework.core.io.ByteArrayResource docxResource = new org.springframework.core.io.ByteArrayResource(
+            docxBytes) {
+          @Override
+          public String getFilename() {
+            return "회의록.docx";
+          }
+        };
+        helper.addAttachment(docxResource.getFilename(), docxResource);
       }
+      System.out.println("메일 전송");
+      mailSender.send(message);
+      System.out.println("메일 전송 완료");
     }
-
-    mailSender.send(message);
   }
 }

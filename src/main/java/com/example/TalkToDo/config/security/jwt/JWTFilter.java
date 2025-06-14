@@ -38,8 +38,13 @@ public class JWTFilter extends OncePerRequestFilter {
 
     Long id = jwtUtil.getId(token);
     String username = jwtUtil.getUsername(token);
+    String email = jwtUtil.getEmail(token);
 
-    User user = User.builder().id(id).username(username).build();
+    User user = User.builder()
+        .id(id)
+        .username(username)
+        .email(email)
+        .build();
 
     PrincipalDetails principalDetails = new PrincipalDetails(user);
 

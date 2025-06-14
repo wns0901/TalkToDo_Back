@@ -12,6 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/meetings")
@@ -73,4 +76,12 @@ public class MeetingController {
             @RequestBody List<TranscriptLineDTO> transcriptLines) {
         return ResponseEntity.ok(meetingService.updateTranscript(meetingId, transcriptLines));
     }
+
+    @GetMapping("{meetingId}/docx")
+    public ResponseEntity<String> getDocx(@PathVariable Long meetingId) {
+        String docx = meetingService.getDocx(meetingId);
+
+        return ResponseEntity.ok(docx);
+    }
+    
 }

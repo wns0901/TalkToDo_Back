@@ -257,4 +257,10 @@ public class MeetingService {
         dto.setTasks(meeting.getTasks());
         return dto;
     }
+
+    public String getDocx(Long meetingId) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+        return meeting.getWordFileUrl();
+    }
 }

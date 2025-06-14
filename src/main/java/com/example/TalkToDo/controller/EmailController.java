@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/email")
+@RequestMapping("/api/emails")
 @RequiredArgsConstructor
 public class EmailController {
 

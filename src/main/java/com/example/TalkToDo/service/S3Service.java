@@ -1,28 +1,26 @@
 package com.example.TalkToDo.service;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.util.IOUtils;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
 
 import lombok.RequiredArgsConstructor;
-import java.net.URL;
-import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -68,13 +66,38 @@ public class S3Service {
   }
 
   public byte[] downloadFile(String fileUrl) {
-    String key = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
-    S3Object s3Object = s3Client.getObject(bucket, key);
-    S3ObjectInputStream inputStream = s3Object.getObjectContent();
     try {
+      if (fileUrl == null || fileUrl.trim().isEmpty()) {
+        throw new RuntimeException("파일 URL이 비어있습니다.");
+      }
+
+      // URL에서 실제 S3 키 추출
+      String key;
+      if (fileUrl.startsWith("http")) {
+        // 전체 URL이 주어진 경우
+        String domain = bucket + ".s3." + region + ".amazonaws.com";
+        if (!fileUrl.contains(domain)) {
+          throw new RuntimeException("잘못된 S3 URL 형식입니다: " + fileUrl);
+        }
+        key = fileUrl.substring(fileUrl.indexOf(domain) + domain.length() + 1);
+      } else {
+        // 키만 주어진 경우
+        key = fileUrl;
+      }
+
+      // URL 디코딩
+      key = URLDecoder.decode(key, StandardCharsets.UTF_8);
+
+      S3Object s3Object = s3Client.getObject(bucket, key);
+      S3ObjectInputStream inputStream = s3Object.getObjectContent();
       return IOUtils.toByteArray(inputStream);
+    } catch (AmazonS3Exception e) {
+      if (e.getStatusCode() == 404) {
+        throw new RuntimeException("파일을 찾을 수 없습니다: " + fileUrl, e);
+      }
+      throw new RuntimeException("S3 파일 다운로드 중 오류가 발생했습니다: " + fileUrl, e);
     } catch (IOException e) {
-      throw new RuntimeException("Error downloading file from S3", e);
+      throw new RuntimeException("파일 다운로드 중 오류가 발생했습니다: " + fileUrl, e);
     }
   }
 
@@ -83,4 +106,5 @@ public class S3Service {
     String decodedFileName = URLDecoder.decode(fileName, StandardCharsets.UTF_8);
     s3Client.deleteObject(bucket, decodedFileName);
   }
+
 }
