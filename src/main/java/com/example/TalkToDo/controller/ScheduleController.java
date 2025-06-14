@@ -66,7 +66,12 @@ public class ScheduleController {
 
     // 사용자의 모든 일정 조회
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ScheduleDTO>> getAllSchedulesByUserId(@PathVariable String userId) {
+    public ResponseEntity<List<ScheduleDTO>> getAllSchedulesByUserId(
+            @PathVariable String userId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().toString().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(scheduleService.getAllSchedulesByUserId(Long.parseLong(userId)));
     }
 
@@ -75,7 +80,11 @@ public class ScheduleController {
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByDateRange(
             @PathVariable String userId,
             @RequestParam LocalDate start,
-            @RequestParam LocalDate end) {
+            @RequestParam LocalDate end,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().toString().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(scheduleService.getSchedulesByDateRange(Long.parseLong(userId), start, end));
     }
 
@@ -83,13 +92,22 @@ public class ScheduleController {
     @GetMapping("/user/{userId}/category")
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByCategory(
             @PathVariable String userId,
-            @RequestParam String category) {
+            @RequestParam String category,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().toString().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(scheduleService.getSchedulesByCategory(Long.parseLong(userId), category));
     }
 
     // 할일 목록 조회
     @GetMapping("/user/{userId}/todos")
-    public ResponseEntity<List<ScheduleDTO>> getTodosByUserId(@PathVariable String userId) {
+    public ResponseEntity<List<ScheduleDTO>> getTodosByUserId(
+            @PathVariable String userId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().toString().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(scheduleService.getTodosByUserId(Long.parseLong(userId)));
     }
 
@@ -97,7 +115,11 @@ public class ScheduleController {
     @GetMapping("/user/{userId}/date")
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByDate(
             @PathVariable Long userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         return ResponseEntity.ok(scheduleService.getSchedulesByDate(userId, date));
     }
 
@@ -112,7 +134,11 @@ public class ScheduleController {
     public ResponseEntity<List<ScheduleDTO>> getSchedulesByMonth(
             @PathVariable Long userId,
             @PathVariable int year,
-            @PathVariable int month) {
+            @PathVariable int month,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null || !principalDetails.getUser().getId().equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
         List<Schedule> schedules = scheduleService.getSchedulesByMonth(userId, year, month);
         List<ScheduleDTO> scheduleDTOs = schedules.stream()
                 .map(scheduleService::convertToDTO)
@@ -124,16 +150,43 @@ public class ScheduleController {
     @PostMapping("/todo/{todoId}/calendar")
     public ResponseEntity<ScheduleDTO> addTodoToCalendar(
             @PathVariable Long todoId,
-            @RequestBody ScheduleDTO scheduleDTO) {
-        Schedule schedule = scheduleService.convertToEntity(scheduleDTO);
-        Schedule savedSchedule = scheduleService.addTodoToCalendar(todoId, schedule);
-        return ResponseEntity.ok(scheduleService.convertToDTO(savedSchedule));
+            @RequestBody(required = false) ScheduleDTO scheduleDTO,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            // 새로운 Schedule 객체 생성
+            Schedule schedule = new Schedule();
+            if (scheduleDTO != null) {
+                schedule = scheduleService.convertToEntity(scheduleDTO);
+            }
+            
+            // 일정 생성 및 저장
+            Schedule savedSchedule = scheduleService.addTodoToCalendar(todoId, schedule);
+            
+            // DTO로 변환하여 반환
+            ScheduleDTO responseDTO = scheduleService.convertToDTO(savedSchedule);
+            return ResponseEntity.ok(responseDTO);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     // 할일을 캘린더에서 제거
     @DeleteMapping("/todo/{todoId}/calendar")
-    public ResponseEntity<?> removeTodoFromCalendar(@PathVariable Long todoId) {
-        scheduleService.removeTodoFromCalendar(todoId);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> removeTodoFromCalendar(
+            @PathVariable Long todoId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        if (principalDetails == null) {
+            return ResponseEntity.status(403).build();
+        }
+        try {
+            scheduleService.removeTodoFromCalendar(todoId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed to remove todo from calendar: " + e.getMessage());
+        }
     }
 } 
