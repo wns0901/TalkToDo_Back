@@ -38,7 +38,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
   protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
       Authentication authResult) throws IOException, ServletException {
     PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
-    String jwtToken = jwtUtil.createJWT(principalDetails.getUser().getId(), principalDetails.getUser().getUsername());
+    String jwtToken = jwtUtil.createJWT(principalDetails.getUser().getId(), principalDetails.getUser().getUsername(), principalDetails.getUser().getEmail());
     response.addHeader("Authorization", "Bearer " + jwtToken);
   }
 

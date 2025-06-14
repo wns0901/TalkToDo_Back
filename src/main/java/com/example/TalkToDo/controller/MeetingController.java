@@ -14,6 +14,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -22,14 +25,14 @@ public class MeetingController {
 
     private final MeetingService meetingService;
 
-    @GetMapping
-    public List<Meeting> getAllMeetings() {
-        return meetingService.getAllMeetings();
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<MeetingDTO> getMeetingDetails(@PathVariable Long id) {
         return ResponseEntity.ok(meetingService.getMeetingDetails(id));
+    }
+
+    @GetMapping("/{id}/audio")
+    public ResponseEntity<String> getAudio(@PathVariable Long id) {
+        return ResponseEntity.ok(meetingService.getAudio(id));
     }
 
     @GetMapping("/user/{userId}")
@@ -41,8 +44,9 @@ public class MeetingController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Meeting createMeeting(
-            @RequestPart("audioFile") MultipartFile audioFile) {
-        return meetingService.createMeeting(audioFile);
+            @RequestPart("audioFile") MultipartFile audioFile,
+            @RequestPart("date") String date) {
+        return meetingService.createMeeting(audioFile, date);
     }
 
     @PutMapping("/{id}")
@@ -74,4 +78,12 @@ public class MeetingController {
             @RequestBody List<TranscriptLineDTO> transcriptLines) {
         return ResponseEntity.ok(meetingService.updateTranscript(meetingId, transcriptLines));
     }
+
+    @GetMapping("{meetingId}/docx")
+    public ResponseEntity<String> getDocx(@PathVariable Long meetingId) {
+        String docx = meetingService.getDocx(meetingId);
+
+        return ResponseEntity.ok(docx);
+    }
+    
 }

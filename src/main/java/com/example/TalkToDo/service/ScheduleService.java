@@ -1,6 +1,7 @@
 package com.example.TalkToDo.service;
 
 import com.example.TalkToDo.dto.ScheduleDTO;
+import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.entity.User;
@@ -257,5 +258,38 @@ public class ScheduleService {
         
         // 일정 삭제
         scheduleRepository.deleteByOriginalTodoId(todoId);
+    }
+
+    @Transactional
+    public List<Schedule> getSchedulesByMeetingId(Long meetingId) {
+        Meeting meeting = Meeting.builder().id(meetingId).build();
+        return scheduleRepository.findByMeeting(meeting);
+    }
+
+    @Transactional
+    public Schedule updateScheduleInMeeting(Long id, ScheduleDTO scheduleDTO) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+        schedule.setTitle(scheduleDTO.getTitle());
+        schedule.setStartDate(scheduleDTO.getStartDate());
+        schedule.setEndDate(scheduleDTO.getEndDate());
+        schedule.setScope(scheduleDTO.getScope());
+        schedule.setDescription(scheduleDTO.getDescription());
+        schedule.setLocation(scheduleDTO.getLocation());
+
+        return scheduleRepository.save(schedule);
+    }
+
+    @Transactional
+    public Schedule addToMySchedule(Long scheduleId, Long userId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+                
+        schedule.setAddedToMySchedule(true);
+        User user = User.builder().id(userId).build();
+        schedule.setDisplayInCalendar(true);
+        schedule.setUser(user);
+        
+        return scheduleRepository.save(schedule);
     }
 }

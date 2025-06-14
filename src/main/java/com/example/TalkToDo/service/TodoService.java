@@ -111,12 +111,7 @@ public class TodoService {
         return todoRepository.findById(id)
                 .map(existingTodo -> {
                     existingTodo.setTitle(todoDetails.getTitle());
-                    existingTodo.setMeeting(todoDetails.getMeeting());
-                    existingTodo.setAssignee(todoDetails.getAssignee());
                     existingTodo.setDueDate(todoDetails.getDueDate());
-                    existingTodo.setStatus(todoDetails.getStatus());
-                    existingTodo.setAddedToMyTodo(todoDetails.isAddedToMyTodo());
-                    existingTodo.setSchedule(todoDetails.isSchedule());
                     return todoRepository.save(existingTodo);
                 });
     }
@@ -131,35 +126,18 @@ public class TodoService {
                 .orElse(false);
     }
 
-    // @Transactional
-    // public ScheduleDTO addTodoToCalendar(Long todoId) {
-    //     Todo todo = todoRepository.findById(todoId)
-    //         .orElseThrow(() -> new RuntimeException("Todo not found"));
-    //     // 이미 캘린더에 추가된 경우 중복 방지(원하면 추가)
-    //     Schedule schedule = new Schedule();
-    //     schedule.setTitle(todo.getTitle());
-    //     schedule.setStartDate(java.time.LocalDate.now());
-    //     schedule.setEndDate(java.time.LocalDate.now());
-    //     schedule.setDisplayInCalendar(true);
-    //     Schedule saved = scheduleRepository.save(schedule);
-    //     // ScheduleService의 convertToDTO를 사용하려면 ScheduleService를 주입하거나, 여기서 직접 DTO 생성
-    //     ScheduleDTO dto = new ScheduleDTO();
-    //     dto.setId(saved.getId());
-    //     dto.setTitle(saved.getTitle());
-    //     dto.setStartDate(saved.getStartDate());
-    //     dto.setEndDate(saved.getEndDate());
-    //     dto.setCategory(saved.getCategory());
-    //     dto.setType(saved.getType());
-    //     dto.setUserId(saved.getUser().getId());
-    //     dto.setCategoryDisplayName(saved.getCategoryDisplayName());
-    //     dto.setTypeDisplayName(saved.getTypeDisplayName());
-    //     dto.setCompleted(saved.isCompleted());
-    //     dto.setFromMeeting(saved.getFromMeeting());
-    //     dto.setTodo(saved.isTodo());
-    //     dto.setDisplayInCalendar(saved.isDisplayInCalendar());
-    //     dto.setOriginalTodoId(saved.getOriginalTodoId());
-    //     return dto;
-    // }
+    @Transactional
+    public Todo addTodoToCalendar(Long todoId, Long userId) {
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+        
+        todo.setAddedToMyTodo(true);
+        
+        User user = User.builder().id(userId).build();
+        todo.setAssignee(user);
+
+        return todoRepository.save(todo);
+    }
 
     @Transactional(readOnly = true)
     public List<Todo> getActiveTodos(Long userId) {

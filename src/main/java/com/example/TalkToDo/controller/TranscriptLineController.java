@@ -1,5 +1,6 @@
 package com.example.TalkToDo.controller;
 
+import com.example.TalkToDo.dto.TranscriptLineListDTO;
 import com.example.TalkToDo.entity.TranscriptLine;
 import com.example.TalkToDo.service.TranscriptLineService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,11 +21,9 @@ public class TranscriptLineController {
         return transcriptLineService.getAllTranscriptLines();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TranscriptLine> getTranscriptLineById(@PathVariable Long id) {
-        return transcriptLineService.getTranscriptLineById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/{meetingId}")
+    public ResponseEntity<List<TranscriptLine>> getTranscriptLineById(@PathVariable Long meetingId) {
+        return ResponseEntity.ok(transcriptLineService.getTranscriptLineById(meetingId));
     }
 
     @PostMapping
@@ -32,11 +31,9 @@ public class TranscriptLineController {
         return transcriptLineService.createTranscriptLine(transcriptLine);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<TranscriptLine> updateTranscriptLine(@PathVariable Long id, @RequestBody TranscriptLine transcriptLineDetails) {
-        return transcriptLineService.updateTranscriptLine(id, transcriptLineDetails)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PutMapping
+    public ResponseEntity<List<TranscriptLine>> updateTranscriptLine(@RequestBody TranscriptLineListDTO transcriptLineList) {
+        return ResponseEntity.ok(transcriptLineService.updateTranscriptLine(transcriptLineList.getTranscriptLineList()));
     }
 
     @DeleteMapping("/{id}")

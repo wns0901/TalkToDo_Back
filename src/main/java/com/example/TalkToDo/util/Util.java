@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -16,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.TalkToDo.config.security.PrincipalDetails;
 import com.example.TalkToDo.dto.MeetingDataDTO;
-import com.example.TalkToDo.dto.MeetingDataDTO.MeetingTranscript;
 
 @Component
 public class Util {
@@ -62,9 +60,40 @@ public class Util {
 
   public File stringToWordFile(String content, String fileName) throws IOException {
     XWPFDocument document = new XWPFDocument();
-    XWPFParagraph paragraph = document.createParagraph();
-    XWPFRun run = paragraph.createRun();
-    run.setText(content);
+
+    // 내용을 줄 단위로 분리
+    String[] lines = content.split("\n");
+
+    for (String line : lines) {
+      String trimmedLine = line.trim();
+      if (trimmedLine.isEmpty())
+        continue; // 빈 줄은 추가하지 않음
+      XWPFParagraph paragraph = document.createParagraph();
+      XWPFRun run = paragraph.createRun();
+
+      // 구분선 처리
+      if (trimmedLine.startsWith("=") || trimmedLine.startsWith("-")) {
+        run.setBold(true);
+        run.setFontSize(12);
+      }
+      // 섹션 제목 처리
+      else if (!trimmedLine.startsWith("•") && !trimmedLine.startsWith("  ")) {
+        run.setBold(true);
+        run.setFontSize(14);
+      }
+      // 들여쓰기된 내용 처리
+      else if (trimmedLine.startsWith("  ")) {
+        paragraph.setIndentationLeft(400); // 들여쓰기 설정
+        run.setFontSize(11);
+      }
+      // 기본 텍스트 처리
+      else {
+        run.setFontSize(11);
+      }
+
+      run.setText(trimmedLine);
+      // run.addBreak(); // 줄바꿈 제거
+    }
 
     File file = new File(System.getProperty("java.io.tmpdir"), fileName);
     try (FileOutputStream out = new FileOutputStream(file)) {
@@ -76,25 +105,59 @@ public class Util {
 
   public String dataToWordString(MeetingDataDTO meetingData) {
     StringBuilder sb = new StringBuilder();
-    sb.append("제목: ");
-    sb.append(meetingData.getMeetingSummary().getSubject());
-    sb.append("\n");
-    sb.append("전문: ");
-    sb.append(meetingData.getMeetingTranscript().stream().map(MeetingTranscript::getText).collect(Collectors.joining(", ")));
-    sb.append("\n");
-    sb.append("요약: ");
-    sb.append(meetingData.getMeetingSummary().getSummary());
-    sb.append("\n");
-    sb.append("일정: ");
-    sb.append(meetingData.getSchedule().stream().map((schedule) -> {
-      return schedule.getStart() + " - " + schedule.getEnd() + " " + schedule.getText();
-    }).collect(Collectors.joining(", ")));
-    sb.append("\n");
-    sb.append("할 일: ");
-    sb.append(meetingData.getTodo().stream().map((todo) -> {
-      return todo.getStart() + " - " + todo.getEnd() + " " + todo.getText();
-    }).collect(Collectors.joining(", ")));
-    sb.append("\n");
+
+    // 제목 섹션
+    sb.append("=".repeat(50));
+    sb.append("\n회의 제목\n");
+    sb.append("\n").append(meetingData.getMeetingSummary().getSubject()).append("\n");
+
+    // 회의 전문 섹션
+    sb.append("\n").append("=".repeat(50));
+    sb.append("\n회의 전문\n");
+    sb.append("=".repeat(50)).append("\n");
+
+    if (meetingData.getMeetingTranscript() != null) {
+      meetingData.getMeetingTranscript().forEach(transcript -> {
+        sb.append(transcript.getText()).append("\n");
+      });
+    }
+
+    // 회의 요약 섹션
+    sb.append("\n").append("=".repeat(50));
+    sb.append("\n회의 요약\n");
+    sb.append("\n").append("=".repeat(50));
+
+    sb.append("\n").append(meetingData.getMeetingSummary().getSummary()).append("\n");
+
+    // 일정 섹션
+    sb.append("\n").append("=".repeat(50));
+    sb.append("\n일정\n");
+    sb.append("\n").append("=".repeat(50));
+
+    if (meetingData.getSchedule() != null) {
+      meetingData.getSchedule().forEach(schedule -> {
+        String start = schedule.getStart() != null ? schedule.getStart().toString() : "";
+        String end = schedule.getEnd() != null ? schedule.getEnd().toString() : "";
+        sb.append("• ").append(start)
+            .append(" ~ ").append(end)
+            .append("\n  ").append(schedule.getText()).append("\n");
+      });
+    }
+
+    // 할 일 섹션
+    sb.append("\n").append("=".repeat(50));
+    sb.append("\n할 일\n");
+    sb.append("\n").append("=".repeat(50));
+    if (meetingData.getTodos() != null) {
+      meetingData.getTodos().forEach(todo -> {
+        String start = todo.getStart() != null ? todo.getStart().toString() : "";
+        String end = todo.getEnd() != null ? todo.getEnd().toString() : "";
+        sb.append("• ").append(start)
+            .append(" ~ ").append(end)
+            .append("\n  ").append(todo.getText()).append("\n");
+      });
+    }
+
     return sb.toString();
   }
 }

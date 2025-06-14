@@ -1,5 +1,6 @@
 package com.example.TalkToDo.service;
 
+import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.TranscriptLine;
 import com.example.TalkToDo.repository.TranscriptLineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,20 +20,17 @@ public class TranscriptLineService {
         return transcriptLineRepository.findAll();
     }
 
-    public Optional<TranscriptLine> getTranscriptLineById(Long id) {
-        return transcriptLineRepository.findById(id);
+    public List<TranscriptLine> getTranscriptLineById(Long meetingId) {
+        Meeting meeting = Meeting.builder().id(meetingId).build();
+        return transcriptLineRepository.findByMeeting(meeting);
     }
 
     public TranscriptLine createTranscriptLine(TranscriptLine transcriptLine) {
         return transcriptLineRepository.save(transcriptLine);
     }
 
-    public Optional<TranscriptLine> updateTranscriptLine(Long id, TranscriptLine transcriptLineDetails) {
-        return transcriptLineRepository.findById(id)
-                .map(existingLine -> {
-                    transcriptLineDetails.setId(id);
-                    return transcriptLineRepository.save(transcriptLineDetails);
-                });
+    public List<TranscriptLine> updateTranscriptLine(List<TranscriptLine> transcriptLineList) {
+        return transcriptLineRepository.saveAll(transcriptLineList);
     }
 
     @Transactional

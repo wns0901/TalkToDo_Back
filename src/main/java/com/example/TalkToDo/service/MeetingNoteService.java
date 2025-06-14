@@ -1,14 +1,15 @@
 package com.example.TalkToDo.service;
 
-import com.example.TalkToDo.entity.MeetingNote;
-import com.example.TalkToDo.entity.Meeting;
-import com.example.TalkToDo.repository.MeetingNoteRepository;
-import com.example.TalkToDo.repository.MeetingRepository;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.TalkToDo.entity.MeetingNote;
+import com.example.TalkToDo.entity.Schedule;
+import com.example.TalkToDo.repository.MeetingNoteRepository;
+import com.example.TalkToDo.repository.MeetingRepository;
 
 @Service
 public class MeetingNoteService {
@@ -37,10 +38,20 @@ public class MeetingNoteService {
     }
 
     public Optional<MeetingNote> updateMeetingNote(Long id, MeetingNote meetingNoteDetails) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID는 null일 수 없습니다.");
+        }
+        System.out.println("meetingNoteDetails: " + meetingNoteDetails);
+        System.out.println("id: " + id);
         return meetingNoteRepository.findById(id)
                 .map(existingNote -> {
-                    meetingNoteDetails.setId(id);
-                    return meetingNoteRepository.save(meetingNoteDetails);
+                    if (meetingNoteDetails.getTitle() != null) {
+                        existingNote.setTitle(meetingNoteDetails.getTitle());
+                    }
+                    if (meetingNoteDetails.getContent() != null) {
+                        existingNote.setContent(meetingNoteDetails.getContent());
+                    }
+                    return meetingNoteRepository.save(existingNote);
                 });
     }
 
@@ -52,4 +63,5 @@ public class MeetingNoteService {
                 })
                 .orElse(false);
     }
-} 
+
+}

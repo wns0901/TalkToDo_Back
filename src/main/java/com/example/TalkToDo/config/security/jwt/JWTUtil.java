@@ -18,9 +18,10 @@ public class JWTUtil {
     secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
   }
 
-  public String createJWT(Long id, String username) {
+  public String createJWT(Long id, String username, String email) {
     return Jwts.builder()
         .claim("id", id)
+        .claim("email", email)
         .claim("username", username)
         .issuedAt(new Date(System.currentTimeMillis())) // 생성시기
         .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 만료시기
@@ -44,6 +45,15 @@ public class JWTUtil {
         .parseSignedClaims(token)
         .getPayload()
         .get("username", String.class);
+  }
+
+  public String getEmail(String token) {
+    return Jwts.parser()
+        .verifyWith(secretKey)
+        .build()
+        .parseSignedClaims(token)
+        .getPayload()
+        .get("email", String.class);
   }
 
   // 만료 여부 확인
