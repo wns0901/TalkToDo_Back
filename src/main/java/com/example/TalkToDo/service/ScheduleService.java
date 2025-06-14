@@ -273,10 +273,23 @@ public class ScheduleService {
         schedule.setTitle(scheduleDTO.getTitle());
         schedule.setStartDate(scheduleDTO.getStartDate());
         schedule.setEndDate(scheduleDTO.getEndDate());
-        schedule.setCategory(scheduleDTO.getCategory());
+        schedule.setScope(scheduleDTO.getScope());
         schedule.setDescription(scheduleDTO.getDescription());
         schedule.setLocation(scheduleDTO.getLocation());
 
+        return scheduleRepository.save(schedule);
+    }
+
+    @Transactional
+    public Schedule addToMySchedule(Long scheduleId, Long userId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+                
+        schedule.setAddedToMySchedule(true);
+        User user = User.builder().id(userId).build();
+        schedule.setDisplayInCalendar(true);
+        schedule.setUser(user);
+        
         return scheduleRepository.save(schedule);
     }
 }

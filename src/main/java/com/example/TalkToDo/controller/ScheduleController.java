@@ -216,4 +216,12 @@ public class ScheduleController {
         ScheduleDTO resDTO = scheduleService.convertToDTO(res);
         return ResponseEntity.ok(resDTO);
     }
+
+    @PatchMapping("my/{scheduleId}")
+    public ResponseEntity<?> updateMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        Long userId = principalDetails.getUser().getId();
+        Schedule res = scheduleService.addToMySchedule(scheduleId, userId);
+        ScheduleDTO resDTO = scheduleService.convertToDTO(res);
+        return ResponseEntity.ok(resDTO);
+    }
 } 

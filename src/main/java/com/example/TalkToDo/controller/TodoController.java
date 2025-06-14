@@ -87,10 +87,11 @@ public class TodoController {
                 : ResponseEntity.notFound().build();
     }
 
-    // @PostMapping("/{todoId}/add-to-calendar")
-    // public ResponseEntity<ScheduleDTO> addTodoToCalendar(@PathVariable Long todoId) {
-    //     return ResponseEntity.ok(todoService.addTodoToCalendar(todoId));
-    // }
+    @PatchMapping("/{todoId}/add-to-calendar")
+    public ResponseEntity<?> addTodoToCalendar(@PathVariable Long todoId, @AuthenticationPrincipal PrincipalDetails principalDetails) {
+        Long userId = principalDetails.getUser().getId();
+        return ResponseEntity.ok(todoService.addTodoToCalendar(todoId, userId));
+    }
 
     // 활성 할일 조회
     @GetMapping("/user/{userId}/active")

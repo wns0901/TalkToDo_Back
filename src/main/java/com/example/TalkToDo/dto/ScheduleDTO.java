@@ -1,14 +1,14 @@
 package com.example.TalkToDo.dto;
 
-import com.example.TalkToDo.entity.ScheduleScope;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Getter;
-import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-@Getter
-@Setter
+import com.example.TalkToDo.entity.ScheduleScope;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.Data;
+
+@Data
 public class ScheduleDTO {
     private Long id;
     private String userId;

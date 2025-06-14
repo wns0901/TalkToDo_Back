@@ -2,6 +2,7 @@ package com.example.TalkToDo.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -104,23 +105,31 @@ public class MeetingService {
                 .content(meetingData.getMeetingSummary().getSummary())
                 .meeting(meeting)
                 .build();
-
         List<Schedule> schedules = meetingData.getSchedule() != null ? meetingData.getSchedule().stream()
-                .map(schedule -> Schedule.builder()
-                        .title(schedule.getText())
-                        .meeting(meeting)
-                        .startDate(schedule.getStart().toLocalDate())
-                        .endDate(schedule.getEnd().toLocalDate())
-                        .build())
+                .map(schedule -> {
+                    return Schedule.builder()
+                            .title(schedule.getText())
+                            .meeting(meeting)
+                            .startDate(schedule.getStart() == null ? null : schedule.getStart().toLocalDate())
+                            .startTime(schedule.getStart() == null ? null : schedule.getStart().toLocalTime())
+                            .endDate(schedule.getEnd() == null ? schedule.getStart() == null ? null : schedule.getStart().toLocalDate() : schedule.getEnd().toLocalDate())
+                            .endTime(schedule.getEnd() == null ? schedule.getStart() == null ? null : schedule.getStart().toLocalTime() : schedule.getEnd().toLocalTime())
+                            .build();
+                })
+                .filter(schedule -> schedule != null)
                 .collect(Collectors.toList()) : new ArrayList<>();
 
         List<Todo> todos = meetingData.getTodos() != null ? meetingData.getTodos().stream()
-                .map(todo -> Todo.builder()
+                .map(todo -> {
+                    return Todo.builder()
                         .title(todo.getText())
                         .meeting(meeting)
-                        .startDate(todo.getStart())
-                        .dueDate(todo.getEnd())
-                        .build())
+                        .type("TODO")
+                            .status("IN_PROGRESS")
+                        .startDate(todo.getStart() != null ? todo.getStart() : todo.getEnd())
+                        .dueDate(todo.getEnd() != null ? todo.getEnd() : todo.getStart())
+                        .build();
+                    })
                 .collect(Collectors.toList()) : new ArrayList<>();
 
         List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript() != null
