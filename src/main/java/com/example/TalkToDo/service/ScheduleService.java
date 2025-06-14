@@ -5,6 +5,7 @@ import com.example.TalkToDo.entity.Meeting;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.entity.Todo;
 import com.example.TalkToDo.entity.User;
+import com.example.TalkToDo.entity.ScheduleScope;
 import com.example.TalkToDo.repository.ScheduleRepository;
 import com.example.TalkToDo.repository.TodoRepository;
 import com.example.TalkToDo.repository.UserRepository;
@@ -122,13 +123,28 @@ public class ScheduleService {
     public Schedule convertToEntity(ScheduleDTO dto) {
         Schedule schedule = new Schedule();
         schedule.setId(dto.getId());
-        schedule.setUserId(dto.getUserId());
         schedule.setTitle(dto.getTitle());
         schedule.setStartDate(dto.getStartDate());
         schedule.setEndDate(dto.getEndDate());
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
+        schedule.setIsTodo(dto.isTodo());
+        schedule.setOriginalTodoId(dto.getOriginalTodoId());
+        schedule.setScope(dto.getScope());
+        schedule.setDescription(dto.getDescription());
+        schedule.setLocation(dto.getLocation());
+        schedule.setColor(dto.getColor());
+
+        // startTime과 endTime 직접 설정
+        schedule.setStartTime(dto.getStartTime());
+        schedule.setEndTime(dto.getEndTime());
+
+        if (dto.getUserId() != null) {
+            User user = userRepository.findById(Long.parseLong(dto.getUserId()))
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            schedule.setUser(user);
+        }
         return schedule;
     }
 
@@ -142,6 +158,21 @@ public class ScheduleService {
         dto.setCategory(schedule.getCategory());
         dto.setType(schedule.getType());
         dto.setDisplayInCalendar(schedule.isDisplayInCalendar());
+        dto.setIsTodo(schedule.isTodo());
+        dto.setOriginalTodoId(schedule.getOriginalTodoId());
+        dto.setScope(schedule.getScope());
+        dto.setDescription(schedule.getDescription());
+        dto.setLocation(schedule.getLocation());
+        dto.setColor(schedule.getColor());
+
+        // startTime과 endTime 직접 설정
+        dto.setStartTime(schedule.getStartTime());
+        dto.setEndTime(schedule.getEndTime());
+
+        if (schedule.getUser() != null) {
+            dto.setUserId(schedule.getUser().getId().toString());
+            dto.setUserName(schedule.getUser().getName());
+        }
         return dto;
     }
 
@@ -153,6 +184,14 @@ public class ScheduleService {
         schedule.setCategory(dto.getCategory());
         schedule.setType(dto.getType());
         schedule.setDisplayInCalendar(dto.isDisplayInCalendar());
+        schedule.setLocation(dto.getLocation());
+        schedule.setDescription(dto.getDescription());
+        schedule.setColor(dto.getColor());
+        schedule.setScope(dto.getScope());
+        schedule.setStartTime(dto.getStartTime());
+        schedule.setEndTime(dto.getEndTime());
+        schedule.setIsTodo(dto.isTodo());
+        schedule.setOriginalTodoId(dto.getOriginalTodoId());
     }
 
     @Transactional
@@ -171,7 +210,7 @@ public class ScheduleService {
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
         User user = User.builder().id(userId).build();
-        return scheduleRepository.findByUserAndStartDateBetween(user, startDate, endDate);
+        return scheduleRepository.findByUserAndDisplayInCalendarIsTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(user, startDate, endDate);
     }
 
     @Transactional
@@ -179,18 +218,45 @@ public class ScheduleService {
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
 
-        schedule.setTitle(todo.getTitle());
-        schedule.setCategory("TODO");
-        schedule.setType("TODO");
-        schedule.setIsTodo(true);
-        schedule.setOriginalTodoId(todoId);
-        schedule.setDisplayInCalendar(true);
+        // Todo의 isSchedule 필드를 true로 설정
+        todo.setSchedule(true);
+        todoRepository.save(todo);
 
-        return scheduleRepository.save(schedule);
+        // 새로운 Schedule 객체 생성
+        Schedule newSchedule = new Schedule();
+        newSchedule.setTitle(todo.getTitle());
+        newSchedule.setCategory("TODO");
+        newSchedule.setType("TODO");
+        newSchedule.setIsTodo(true);
+        newSchedule.setOriginalTodoId(todoId);
+        newSchedule.setDisplayInCalendar(true);
+        
+        // Todo의 정보를 사용하여 일정 정보 설정
+        newSchedule.setStartDate(todo.getStartDate());
+        newSchedule.setEndDate(todo.getDueDate());
+        newSchedule.setUser(todo.getAssignee());
+        newSchedule.setScope(ScheduleScope.PERSONAL);  // 기본값으로 PERSONAL 설정
+        
+        // Todo의 상태에 따라 색상 설정
+        if ("COMPLETED".equals(todo.getStatus())) {
+            newSchedule.setColor("#808080");  // 완료된 경우 회색
+        } else {
+            newSchedule.setColor("#FF0000");  // 미완료된 경우 빨간색
+        }
+
+        // 일정 저장 및 반환
+        return scheduleRepository.save(newSchedule);
     }
 
     @Transactional
     public void removeTodoFromCalendar(Long todoId) {
+        // Todo의 isSchedule 필드를 false로 변경
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+        todo.setSchedule(false);
+        todoRepository.save(todo);
+        
+        // 일정 삭제
         scheduleRepository.deleteByOriginalTodoId(todoId);
     }
 

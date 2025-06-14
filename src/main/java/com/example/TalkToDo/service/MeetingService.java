@@ -239,13 +239,14 @@ public class MeetingService {
     private TodoDTO convertToTodoDTO(Todo todo) {
         TodoDTO dto = new TodoDTO();
         dto.setId(todo.getId());
-        dto.setText(todo.getTitle());
+        dto.setTitle(todo.getTitle());
         dto.setType(todo.getType());
         dto.setStartDate(todo.getStartDate());
         dto.setDueDate(todo.getDueDate());
-        dto.setAssignee(todo.getAssignee() != null ? todo.getAssignee().getName() : null);
+        dto.setAssigneeId(todo.getAssignee() != null ? todo.getAssignee().getId().toString() : null);
+        dto.setAssigneeName(todo.getAssignee() != null ? todo.getAssignee().getName() : null);
         dto.setStatus(todo.getStatus());
-        dto.setSchedule(todo.isSchedule());
+        dto.setMeetingId(todo.getMeeting() != null ? todo.getMeeting().getId() : null);
         return dto;
     }
 
