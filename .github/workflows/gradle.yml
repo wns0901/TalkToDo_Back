@@ -150,6 +150,26 @@ jobs:
                 sudo nginx -t && sudo systemctl restart nginx
                 
                 echo "🎉 SSL 설정이 완료되었습니다!"
+              else
+                echo "⚠️  SSL 인증서 발급에 실패했습니다. 기존 인증서를 확인합니다..."
+                
+                # 기존 인증서 확인
+                if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
+                  echo "✅ 기존 SSL 인증서를 사용합니다."
+                  sudo apt-get install -y nginx
+                  
+                  # Nginx 설정 파일 복사
+                  sudo cp nginx-spring.conf /etc/nginx/sites-available/talktodo
+                  sudo ln -sf /etc/nginx/sites-available/talktodo /etc/nginx/sites-enabled/
+                  sudo rm -f /etc/nginx/sites-enabled/default
+                  
+                  # Nginx 설정 테스트 및 재시작
+                  sudo nginx -t && sudo systemctl restart nginx
+                  
+                  echo "🎉 기존 SSL 인증서로 설정이 완료되었습니다!"
+                else
+                  echo "❌ SSL 인증서가 없습니다. HTTP로만 서비스됩니다."
+                fi
               fi
             else
               echo "⚠️  도메인이 설정되지 않아 SSL 설정을 건너뜁니다."
