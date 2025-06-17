@@ -56,7 +56,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_KEY }}
           source: ".env,docker-compose.yml,nginx-spring.conf"
           target: "/home/ubuntu/TalkToDo"
           strip_components: 0
@@ -66,7 +66,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_KEY }}
           script: |
             cd /home/ubuntu/TalkToDo
 
