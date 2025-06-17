@@ -148,8 +148,10 @@ jobs:
                 
                 # Nginx 설정 테스트 및 재시작
                 sudo nginx -t && sudo systemctl restart nginx
+                sudo systemctl enable nginx
                 
                 echo "🎉 SSL 설정이 완료되었습니다!"
+                echo "🌐 HTTPS 접속: https://$DOMAIN"
               else
                 echo "⚠️  SSL 인증서 발급에 실패했습니다. 기존 인증서를 확인합니다..."
                 
@@ -165,8 +167,10 @@ jobs:
                   
                   # Nginx 설정 테스트 및 재시작
                   sudo nginx -t && sudo systemctl restart nginx
+                  sudo systemctl enable nginx
                   
                   echo "🎉 기존 SSL 인증서로 설정이 완료되었습니다!"
+                  echo "🌐 HTTPS 접속: https://$DOMAIN"
                 else
                   echo "❌ SSL 인증서가 없습니다. HTTP로만 서비스됩니다."
                 fi
