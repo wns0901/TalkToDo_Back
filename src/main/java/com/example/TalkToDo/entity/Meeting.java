@@ -1,8 +1,24 @@
 package com.example.TalkToDo.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -26,6 +42,7 @@ public class Meeting extends BaseTimeEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @Column(columnDefinition = "TEXT")
@@ -43,13 +60,21 @@ public class Meeting extends BaseTimeEntity {
 
     private boolean favorite;
 
-    @OneToMany
-    @JoinTable(
-        name = "meeting_schedules",
-        joinColumns = @JoinColumn(name = "meeting_id"),
-        inverseJoinColumns = @JoinColumn(name = "schedule_id")
-    )
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Schedule> schedules;
 
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Todo> todos;
+
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<TranscriptLine> transcriptLines;
+
+    @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<MeetingNote> meetingNotes;
+
     // createdAt은 BaseTimeEntity에서 상속
-} 
+}
