@@ -155,8 +155,8 @@ jobs:
               else
                 echo "⚠️  SSL 인증서 발급에 실패했습니다. 기존 인증서를 확인합니다..."
                 
-                # 기존 인증서 확인
-                if [ -d "/etc/letsencrypt/live/$DOMAIN" ]; then
+                # 기존 인증서 확인 (디렉토리 또는 파일 존재 여부)
+                if [ -d "/etc/letsencrypt/live/$DOMAIN" ] || [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
                   echo "✅ 기존 SSL 인증서를 사용합니다."
                   sudo apt-get install -y nginx
                   
