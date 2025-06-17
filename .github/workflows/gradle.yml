@@ -104,9 +104,9 @@ jobs:
             sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
             sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
 
-            # Docker Compose로 배포 (SSL 프로필 포함)
-            sudo /usr/local/bin/docker-compose --profile ssl pull
-            sudo /usr/local/bin/docker-compose --profile ssl up -d
+            # Docker Compose로 배포
+            sudo /usr/local/bin/docker-compose pull
+            sudo /usr/local/bin/docker-compose up -d
 
             # 배포 후 상태 확인
             echo "🔍 배포 상태 확인 중..."
