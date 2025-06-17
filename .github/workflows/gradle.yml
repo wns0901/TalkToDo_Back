@@ -109,3 +109,40 @@ jobs:
             # Docker Compose로 배포
             sudo /usr/local/bin/docker-compose pull
             sudo /usr/local/bin/docker-compose up -d
+
+            # 배포 후 상태 확인
+            echo "🔍 배포 상태 확인 중..."
+            sleep 30
+
+            # 컨테이너 상태 확인
+            sudo docker ps -a
+
+            # 포트 상태 확인
+            sudo netstat -tlnp | grep :8080 || echo "포트 8080이 열려있지 않습니다"
+
+            # 애플리케이션 로그 확인
+            sudo docker-compose logs --tail=20
+
+            # SSL 인증서 설정 (도메인이 설정된 경우)
+            if [ ! -z "api-talktodo.kro.kr" ]; then
+              echo "🔒 SSL 인증서 설정을 시작합니다..."
+              
+              # Certbot 설치
+              if ! command -v certbot &> /dev/null; then
+                echo "📦 Certbot을 설치합니다..."
+                sudo apt-get update
+                sudo apt-get install -y certbot
+              fi
+              
+              # SSL 인증서 발급
+              sudo certbot certonly --standalone -d api-talktodo.kro.kr --non-interactive --agree-tos --email ${{ secrets.EMAIL }} || echo "SSL 인증서 발급 실패 (도메인 설정 확인 필요)"
+              
+              # Nginx 설치 및 설정
+              if [ -f "/etc/letsencrypt/live/api-talktodo.kro.kr/fullchain.pem" ]; then
+                echo "✅ SSL 인증서가 발급되었습니다. Nginx를 설정합니다..."
+                sudo apt-get install -y nginx
+                echo "🎉 SSL 설정이 완료되었습니다!"
+              fi
+            else
+              echo "⚠️  도메인이 설정되지 않아 SSL 설정을 건너뜁니다."
+            fi
