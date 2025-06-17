@@ -112,8 +112,12 @@ public class MeetingService {
                             .meeting(meeting)
                             .startDate(schedule.getStart() == null ? null : schedule.getStart().toLocalDate())
                             .startTime(schedule.getStart() == null ? null : schedule.getStart().toLocalTime())
-                            .endDate(schedule.getEnd() == null ? schedule.getStart() == null ? null : schedule.getStart().toLocalDate() : schedule.getEnd().toLocalDate())
-                            .endTime(schedule.getEnd() == null ? schedule.getStart() == null ? null : schedule.getStart().toLocalTime() : schedule.getEnd().toLocalTime())
+                            .endDate(schedule.getEnd() == null
+                                    ? schedule.getStart() == null ? null : schedule.getStart().toLocalDate()
+                                    : schedule.getEnd().toLocalDate())
+                            .endTime(schedule.getEnd() == null
+                                    ? schedule.getStart() == null ? null : schedule.getStart().toLocalTime()
+                                    : schedule.getEnd().toLocalTime())
                             .build();
                 })
                 .filter(schedule -> schedule != null)
@@ -122,14 +126,14 @@ public class MeetingService {
         List<Todo> todos = meetingData.getTodos() != null ? meetingData.getTodos().stream()
                 .map(todo -> {
                     return Todo.builder()
-                        .title(todo.getText())
-                        .meeting(meeting)
-                        .type("TODO")
+                            .title(todo.getText())
+                            .meeting(meeting)
+                            .type("TODO")
                             .status("IN_PROGRESS")
-                        .startDate(todo.getStart() != null ? todo.getStart() : todo.getEnd())
-                        .dueDate(todo.getEnd() != null ? todo.getEnd() : todo.getStart())
-                        .build();
-                    })
+                            .startDate(todo.getStart() != null ? todo.getStart() : todo.getEnd())
+                            .dueDate(todo.getEnd() != null ? todo.getEnd() : todo.getStart())
+                            .build();
+                })
                 .collect(Collectors.toList()) : new ArrayList<>();
 
         List<TranscriptLine> transcriptLines = meetingData.getMeetingTranscript() != null
@@ -144,13 +148,14 @@ public class MeetingService {
                         .collect(Collectors.toList())
                 : new ArrayList<>();
 
-        meetingRepository.save(meeting);
-        scheduleRepository.saveAll(schedules);
-        todoRepository.saveAll(todos);
-        transcriptLineRepository.saveAll(transcriptLines);
-        meetingNoteRepository.save(meetingNote);
+        // Meeting에 연관된 엔티티들을 설정
+        meeting.setSchedules(schedules);
+        meeting.setTodos(todos);
+        meeting.setTranscriptLines(transcriptLines);
+        meeting.setMeetingNotes(List.of(meetingNote));
 
-        return meeting;
+        // Meeting만 저장하면 cascade로 연관된 엔티티들도 자동 저장됨
+        return meetingRepository.save(meeting);
     }
 
     public Optional<Meeting> updateMeeting(Long id, Meeting meetingDetails) {
@@ -281,5 +286,14 @@ public class MeetingService {
         Meeting meeting = meetingRepository.findById(meetingId)
                 .orElseThrow(() -> new RuntimeException("Meeting not found"));
         return meeting.getWordFileUrl();
+    }
+
+    public Meeting updateMeetingTitle(Long meetingId, String title) {
+        // JSON에서 문자열이 따옴표로 감싸져서 들어오는 경우 처리
+        title = title.replaceAll("^\"|\"$", "");
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new RuntimeException("Meeting not found"));
+        meeting.setTitle(title);
+        return meetingRepository.save(meeting);
     }
 }

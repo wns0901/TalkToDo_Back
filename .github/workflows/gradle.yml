@@ -1,0 +1,148 @@
+name: Build and Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Gradle 설정
+        uses: gradle/actions/setup-gradle@v4.0.0
+
+      - name: gradlew 에 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: Gradle Wrapper 로 빌드
+        run: ./gradlew build -x test
+
+      - name: DockerHub 로그인
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build, Push Docker image
+        run: |
+          docker build -f ./Dockerfile -t wns0901/talktodo-server:latest .
+          docker push wns0901/talktodo-server:latest
+
+      - name: .env 파일 생성
+        run: |
+          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" > .env
+          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> .env
+          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> .env
+          echo "SPRING_MAIL_USERNAME=${{ secrets.SPRING_MAIL_USERNAME }}" >> .env
+          echo "SPRING_MAIL_PASSWORD=${{ secrets.SPRING_MAIL_PASSWORD }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "CLOUD_AWS_S3_BUCKET=${{ secrets.CLOUD_AWS_S3_BUCKET }}" >> .env
+          echo "CLOUD_AWS_REGION_STATIC=${{ secrets.CLOUD_AWS_REGION_STATIC }}" >> .env
+          echo "CLOUD_AWS_CREDENTIALS_ACCESS_KEY=${{ secrets.CLOUD_AWS_CREDENTIALS_ACCESS_KEY }}" >> .env
+          echo "CLOUD_AWS_CREDENTIALS_SECRET_KEY=${{ secrets.CLOUD_AWS_CREDENTIALS_SECRET_KEY }}" >> .env
+          echo "API_URL=${{ secrets.API_URL }}" >> .env
+
+      - name: EC2 에 파일 업로드
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "docker-compose.yml,.env"
+          target: /home/ubuntu/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: EC2 에 배포
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            # Docker 설치 확인 및 설치
+            if ! command -v docker &> /dev/null; then
+              echo "🐳 Docker가 설치되어 있지 않습니다. Docker를 설치합니다..."
+              sudo apt-get update
+              sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+              echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -a -G docker ubuntu
+              echo "✅ Docker 설치가 완료되었습니다."
+            else
+              echo "✅ Docker가 이미 설치되어 있습니다."
+            fi
+
+            # Docker Compose 설치 확인 및 설치
+            if ! command -v docker-compose &> /dev/null; then
+              echo "🐳 Docker Compose를 설치합니다..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              echo "✅ Docker Compose 설치가 완료되었습니다."
+            else
+              echo "✅ Docker Compose가 이미 설치되어 있습니다."
+            fi
+
+            # Docker 로그인
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+            # 기존 컨테이너 정리
+            sudo docker stop $(sudo docker ps -aq) 2>/dev/null || true
+            sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
+
+            # Docker Compose로 배포
+            sudo /usr/local/bin/docker-compose pull
+            sudo /usr/local/bin/docker-compose up -d
+
+            # 배포 후 상태 확인
+            echo "🔍 배포 상태 확인 중..."
+            sleep 30
+
+            # 컨테이너 상태 확인
+            sudo docker ps -a
+
+            # 포트 상태 확인
+            sudo netstat -tlnp | grep :8080 || echo "포트 8080이 열려있지 않습니다"
+
+            # 애플리케이션 로그 확인
+            sudo docker-compose logs --tail=20
+
+            # SSL 인증서 설정 (도메인이 설정된 경우)
+            if [ ! -z "api-talktodo.kro.kr" ]; then
+              echo "🔒 SSL 인증서 설정을 시작합니다..."
+              
+              # Certbot 설치
+              if ! command -v certbot &> /dev/null; then
+                echo "📦 Certbot을 설치합니다..."
+                sudo apt-get update
+                sudo apt-get install -y certbot
+              fi
+              
+              # SSL 인증서 발급
+              sudo certbot certonly --standalone -d api-talktodo.kro.kr --non-interactive --agree-tos --email ${{ secrets.EMAIL }} || echo "SSL 인증서 발급 실패 (도메인 설정 확인 필요)"
+              
+              # Nginx 설치 및 설정
+              if [ -f "/etc/letsencrypt/live/api-talktodo.kro.kr/fullchain.pem" ]; then
+                echo "✅ SSL 인증서가 발급되었습니다. Nginx를 설정합니다..."
+                sudo apt-get install -y nginx
+                echo "🎉 SSL 설정이 완료되었습니다!"
+              fi
+            else
+              echo "⚠️  도메인이 설정되지 않아 SSL 설정을 건너뜁니다."
+            fi
