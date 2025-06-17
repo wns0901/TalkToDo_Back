@@ -86,4 +86,8 @@ public class MeetingController {
         return ResponseEntity.ok(docx);
     }
     
+    @PatchMapping("/{meetingId}/title")
+    public ResponseEntity<Meeting> updateMeetingTitle(@PathVariable Long meetingId, @RequestBody String title) {
+        return ResponseEntity.ok(meetingService.updateMeetingTitle(meetingId, title));
+    }
 }
