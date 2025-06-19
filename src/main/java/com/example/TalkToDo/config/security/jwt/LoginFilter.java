@@ -38,13 +38,29 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
   protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
       Authentication authResult) throws IOException, ServletException {
     PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
-    String jwtToken = jwtUtil.createJWT(principalDetails.getUser().getId(), principalDetails.getUser().getUsername(), principalDetails.getUser().getEmail());
+    String jwtToken = jwtUtil.createJWT(principalDetails.getUser().getId(), principalDetails.getUser().getUsername(),
+        principalDetails.getUser().getEmail());
+
+    // 헤더에 토큰 추가
     response.addHeader("Authorization", "Bearer " + jwtToken);
+
+    // 응답 본문에 토큰과 사용자 정보 포함
+    response.setContentType("application/json;charset=UTF-8");
+    String responseBody = String.format(
+        "{\"token\":\"%s\",\"user\":{\"id\":%d,\"username\":\"%s\",\"email\":\"%s\"}}",
+        jwtToken,
+        principalDetails.getUser().getId(),
+        principalDetails.getUser().getUsername(),
+        principalDetails.getUser().getEmail());
+    response.getWriter().write(responseBody);
   }
 
   @Override
   protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
       AuthenticationException failed) throws IOException, ServletException {
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    response.setContentType("application/json;charset=UTF-8");
+    String responseBody = "{\"error\":\"로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.\"}";
+    response.getWriter().write(responseBody);
   }
 }
