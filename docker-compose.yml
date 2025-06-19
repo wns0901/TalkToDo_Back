@@ -21,3 +21,12 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    # 컨테이너 타임아웃 설정
+    stop_grace_period: 1800s
+    # 리소스 제한 설정
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
