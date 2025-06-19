@@ -88,7 +88,12 @@ jobs:
             sudo rm -f /home/ubuntu/TalkToDo/ssl/ca_bundle.crt
             sudo rm -f /home/ubuntu/TalkToDo/ssl/certificate.crt
             sudo rm -f /home/ubuntu/TalkToDo/ssl/private.key
-            echo "✅ 기존 SSL 파일 정리 완료"
+
+            # SSL 디렉토리 권한 수정
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/TalkToDo/ssl
+            sudo chmod 755 /home/ubuntu/TalkToDo/ssl
+
+            echo "✅ 기존 SSL 파일 정리 및 권한 수정 완료"
 
       - name: SSL 인증서 파일들 업로드
         uses: appleboy/scp-action@master
@@ -99,6 +104,20 @@ jobs:
           source: "ca_bundle.crt,certificate.crt,private.key"
           target: "/home/ubuntu/TalkToDo/ssl"
           strip_components: 0
+
+      - name: SSL 파일 권한 설정
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "🔐 SSL 파일 권한 설정 중..."
+            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/certificate.crt
+            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/ca_bundle.crt
+            sudo chmod 600 /home/ubuntu/TalkToDo/ssl/private.key
+            sudo chown -R root:root /home/ubuntu/TalkToDo/ssl
+            echo "✅ SSL 파일 권한 설정 완료"
 
       - name: Nginx 설정 파일 업로드
         uses: appleboy/scp-action@master
@@ -185,12 +204,9 @@ jobs:
               echo "✅ Nginx가 이미 설치되어 있습니다."
             fi
 
-            # SSL 인증서 파일 권한 설정
-            echo "🔐 SSL 인증서 파일 권한 설정 중..."
-            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/certificate.crt
-            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/ca_bundle.crt
-            sudo chmod 600 /home/ubuntu/TalkToDo/ssl/private.key
-            sudo chown -R root:root /home/ubuntu/TalkToDo/ssl
+            # SSL 디렉토리 생성
+            echo "📁 SSL 디렉토리 생성 중..."
+            sudo mkdir -p /home/ubuntu/TalkToDo/ssl
 
             # Nginx 설정 파일 적용
             echo "⚙️ Nginx 설정 적용 중..."
