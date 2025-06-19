@@ -63,24 +63,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-    // CORS 설정
-    http
-        .cors(corsConfigurer -> corsConfigurer.configurationSource(request -> {
-          CorsConfiguration config = new CorsConfiguration();
-          // 모든 오리진 허용
-          config.setAllowedOriginPatterns(List.of("*"));
-          // 모든 메서드 허용
-          config.setAllowedMethods(List.of("*"));
-          // 모든 헤더 허용
-          config.setAllowedHeaders(List.of("*"));
-          // 모든 헤더 노출
-          config.setExposedHeaders(List.of("*"));
-          // Credentials 허용
-          config.setAllowCredentials(true);
-          // Preflight 요청 캐시 시간 (1시간)
-          config.setMaxAge(3600L);
-          return config;
-        }));
+    // CORS 설정 제거 (Nginx에서 처리)
 
     http.addFilterAt(new LoginFilter(jwtUtil, authenticationManager(authenticationConfiguration)),
         UsernamePasswordAuthenticationFilter.class);
