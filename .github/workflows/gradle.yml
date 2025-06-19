@@ -87,6 +87,29 @@ jobs:
           target: "/home/ubuntu/TalkToDo/ssl"
           strip_components: 0
 
+      - name: 기존 SSL 파일 정리
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            echo "🧹 기존 SSL 파일 정리 중..."
+            sudo rm -f /home/ubuntu/TalkToDo/ssl/ca_bundle.crt
+            sudo rm -f /home/ubuntu/TalkToDo/ssl/certificate.crt
+            sudo rm -f /home/ubuntu/TalkToDo/ssl/private.key
+            echo "✅ 기존 SSL 파일 정리 완료"
+
+      - name: SSL 인증서 파일들 업로드
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "ca_bundle.crt,certificate.crt,private.key"
+          target: "/home/ubuntu/TalkToDo/ssl"
+          strip_components: 0
+
       - name: Nginx 설정 파일 업로드
         uses: appleboy/scp-action@master
         with:
