@@ -67,14 +67,18 @@ public class SecurityConfig {
     http
         .cors(corsConfigurer -> corsConfigurer.configurationSource(request -> {
           CorsConfiguration config = new CorsConfiguration();
-          // ✅ 방법 1: 구체적인 오리진 지정
-          // config.setAllowedOrigins(corsAllowedOrigins);
-          // ✅ 방법 2: 패턴 사용
+          // 모든 오리진 허용
           config.setAllowedOriginPatterns(List.of("*"));
+          // 모든 메서드 허용
           config.setAllowedMethods(List.of("*"));
-          config.setAllowCredentials(true);
+          // 모든 헤더 허용
           config.setAllowedHeaders(List.of("*"));
+          // 모든 헤더 노출
           config.setExposedHeaders(List.of("*"));
+          // Credentials 허용
+          config.setAllowCredentials(true);
+          // Preflight 요청 캐시 시간 (1시간)
+          config.setMaxAge(3600L);
           return config;
         }));
 
