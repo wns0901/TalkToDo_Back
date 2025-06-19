@@ -208,6 +208,23 @@ jobs:
               echo "🔒 HTTPS 접속: https://api-talktodo.kro.kr"
               echo "📊 포트 상태:"
               sudo netstat -tlnp | grep -E ":80|:443|:8080"
+              
+              # 보안 그룹 확인 (EC2 인스턴스에서)
+              echo "🔍 보안 그룹 확인:"
+              echo "80 포트 확인:"
+              sudo netstat -tlnp | grep :80 || echo "80 포트가 열려있지 않습니다"
+              echo "443 포트 확인:"
+              sudo netstat -tlnp | grep :443 || echo "443 포트가 열려있지 않습니다"
+              echo "8080 포트 확인:"
+              sudo netstat -tlnp | grep :8080 || echo "8080 포트가 열려있지 않습니다"
+              
+              # Nginx 상태 상세 확인
+              echo "📋 Nginx 상세 상태:"
+              sudo systemctl status nginx --no-pager -l
+              
+              # Nginx 설정 파일 확인
+              echo "📄 Nginx 설정 파일 확인:"
+              sudo nginx -T | grep -E "listen|server_name"
             else
               echo "❌ Nginx 설정에 오류가 있습니다."
               exit 1
