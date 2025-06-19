@@ -51,13 +51,49 @@ jobs:
           echo "CLOUD_AWS_CREDENTIALS_SECRET_KEY=${{ secrets.CLOUD_AWS_CREDENTIALS_SECRET_KEY }}" >> .env
           echo "API_URL=${{ secrets.API_URL }}" >> .env
 
-      - name: EC2 에 파일 업로드
+      - name: .env 파일 업로드
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: ".env,docker-compose.yml,nginx-spring.conf"
+          source: ".env"
+          target: "/home/ubuntu/TalkToDo"
+          strip_components: 0
+
+      - name: docker-compose.yml 파일 업로드
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/TalkToDo"
+          strip_components: 0
+
+      - name: SSL 인증서 파일들 생성
+        run: |
+          echo "${{ secrets.CA_BUNDLE_CRT }}" > ca_bundle.crt
+          echo "${{ secrets.CERTIFICATE_CRT }}" > certificate.crt
+          echo "${{ secrets.PRIVATE_KEY }}" > private.key
+
+      - name: SSL 인증서 파일들 업로드
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "ca_bundle.crt,certificate.crt,private.key"
+          target: "/home/ubuntu/TalkToDo/ssl"
+          strip_components: 0
+
+      - name: Nginx 설정 파일 업로드
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "nginx.conf"
           target: "/home/ubuntu/TalkToDo"
           strip_components: 0
 
@@ -121,60 +157,58 @@ jobs:
             # 애플리케이션 로그 확인
             sudo docker-compose logs --tail=20
 
-            # SSL 인증서 설정 (도메인이 설정된 경우)
-            DOMAIN="api-talktodo.kro.kr"
-            if [ ! -z "$DOMAIN" ] && [ "$DOMAIN" != "yourdomain.com" ]; then
-              echo "🔒 SSL 인증서 설정을 시작합니다..."
-              
-              # Certbot 설치
-              if ! command -v certbot &> /dev/null; then
-                echo "📦 Certbot을 설치합니다..."
-                sudo apt-get update
-                sudo apt-get install -y certbot
-              fi
-              
-              # SSL 인증서 발급
-              sudo certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos --email ${{ secrets.EMAIL }} || echo "SSL 인증서 발급 실패 (도메인 설정 확인 필요)"
-              
-              # Nginx 설치 및 설정
-              if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
-                echo "✅ SSL 인증서가 발급되었습니다. Nginx를 설정합니다..."
-                sudo apt-get install -y nginx
-                
-                # Nginx 설정 파일 복사
-                sudo cp nginx-spring.conf /etc/nginx/sites-available/talktodo
-                sudo ln -sf /etc/nginx/sites-available/talktodo /etc/nginx/sites-enabled/
-                sudo rm -f /etc/nginx/sites-enabled/default
-                
-                # Nginx 설정 테스트 및 재시작
-                sudo nginx -t && sudo systemctl restart nginx
-                sudo systemctl enable nginx
-                
-                echo "🎉 SSL 설정이 완료되었습니다!"
-                echo "🌐 HTTPS 접속: https://$DOMAIN"
-              else
-                echo "⚠️  SSL 인증서 발급에 실패했습니다. 기존 인증서를 확인합니다..."
-                
-                # 기존 인증서 확인 (디렉토리 또는 파일 존재 여부)
-                if [ -d "/etc/letsencrypt/live/$DOMAIN" ] || [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
-                  echo "✅ 기존 SSL 인증서를 사용합니다."
-                  sudo apt-get install -y nginx
-                  
-                  # Nginx 설정 파일 복사
-                  sudo cp nginx-spring.conf /etc/nginx/sites-available/talktodo
-                  sudo ln -sf /etc/nginx/sites-available/talktodo /etc/nginx/sites-enabled/
-                  sudo rm -f /etc/nginx/sites-enabled/default
-                  
-                  # Nginx 설정 테스트 및 재시작
-                  sudo nginx -t && sudo systemctl restart nginx
-                  sudo systemctl enable nginx
-                  
-                  echo "🎉 기존 SSL 인증서로 설정이 완료되었습니다!"
-                  echo "🌐 HTTPS 접속: https://$DOMAIN"
-                else
-                  echo "❌ SSL 인증서가 없습니다. HTTP로만 서비스됩니다."
-                fi
-              fi
+            echo "✅ Docker 배포가 완료되었습니다!"
+            echo "🌐 애플리케이션 접속: http://${{ secrets.EC2_HOST }}:8080"
+
+            # Nginx 설치 확인 및 설치
+            echo "📦 Nginx 설치 확인 중..."
+            if ! command -v nginx &> /dev/null; then
+              echo "🐳 Nginx가 설치되어 있지 않습니다. Nginx를 설치합니다..."
+              sudo apt-get update
+              sudo apt-get install -y nginx
+              sudo systemctl enable nginx
+              echo "✅ Nginx 설치가 완료되었습니다."
             else
-              echo "⚠️  도메인이 설정되지 않아 SSL 설정을 건너뜁니다."
+              echo "✅ Nginx가 이미 설치되어 있습니다."
+            fi
+
+            # SSL 디렉토리 생성
+            echo "📁 SSL 디렉토리 생성 중..."
+            sudo mkdir -p /home/ubuntu/TalkToDo/ssl
+
+            # SSL 인증서 파일 권한 설정
+            echo "🔐 SSL 인증서 파일 권한 설정 중..."
+            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/certificate.crt
+            sudo chmod 644 /home/ubuntu/TalkToDo/ssl/ca_bundle.crt
+            sudo chmod 600 /home/ubuntu/TalkToDo/ssl/private.key
+            sudo chown -R root:root /home/ubuntu/TalkToDo/ssl
+
+            # Nginx 설정 파일 적용
+            echo "⚙️ Nginx 설정 적용 중..."
+            sudo cp /home/ubuntu/TalkToDo/nginx.conf /etc/nginx/sites-available/talktodo
+            sudo ln -sf /etc/nginx/sites-available/talktodo /etc/nginx/sites-enabled/
+            sudo rm -f /etc/nginx/sites-enabled/default
+
+            # Nginx 설정 테스트
+            echo "🧪 Nginx 설정 테스트 중..."
+            sudo nginx -t
+
+            if [ $? -eq 0 ]; then
+              echo "✅ Nginx 설정이 올바릅니다."
+              
+              # Nginx 재시작
+              echo "🔄 Nginx 재시작 중..."
+              sudo systemctl restart nginx
+              
+              # Nginx 상태 확인
+              echo "📋 Nginx 상태 확인:"
+              sudo systemctl status nginx --no-pager
+              
+              echo "🎉 SSL 설정이 완료되었습니다!"
+              echo "🔒 HTTPS 접속: https://api-talktodo.kro.kr"
+              echo "📊 포트 상태:"
+              sudo netstat -tlnp | grep -E ":80|:443|:8080"
+            else
+              echo "❌ Nginx 설정에 오류가 있습니다."
+              exit 1
             fi
