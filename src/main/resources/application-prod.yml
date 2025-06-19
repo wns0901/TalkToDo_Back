@@ -1,8 +1,16 @@
 server:
   port: 8080
+  # 서버 타임아웃 설정 (30분)
+  connection-timeout: 1800000
 
   tomcat:
     max-http-form-post-size: 10GB
+    # 스레드 풀 타임아웃 설정
+    threads:
+      max: 200
+      min-spare: 10
+    # 커넥션 타임아웃 설정
+    connection-timeout: 1800000
 
 spring:
   application.name: TalkToDo
