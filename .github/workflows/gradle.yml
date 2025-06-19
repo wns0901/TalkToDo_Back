@@ -185,10 +185,6 @@ jobs:
               echo "✅ Nginx가 이미 설치되어 있습니다."
             fi
 
-            # SSL 디렉토리 생성
-            echo "📁 SSL 디렉토리 생성 중..."
-            sudo mkdir -p /home/ubuntu/TalkToDo/ssl
-
             # SSL 인증서 파일 권한 설정
             echo "🔐 SSL 인증서 파일 권한 설정 중..."
             sudo chmod 644 /home/ubuntu/TalkToDo/ssl/certificate.crt
