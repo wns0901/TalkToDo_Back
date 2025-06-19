@@ -27,10 +27,8 @@ import com.example.TalkToDo.dto.ScheduleDTO;
 import com.example.TalkToDo.entity.Schedule;
 import com.example.TalkToDo.service.ScheduleService;
 
-
 @RestController
 @RequestMapping("/api/schedules")
-@CrossOrigin(origins = "*")
 public class ScheduleController {
 
     @Autowired
@@ -135,7 +133,8 @@ public class ScheduleController {
     }
 
     @PostMapping("/{scheduleId}/add-to-my-schedule")
-    public ResponseEntity<?> addToMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
+    public ResponseEntity<?> addToMySchedule(@PathVariable Long scheduleId,
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user) {
         scheduleService.addScheduleToUser(scheduleId, Long.parseLong(user.getUsername()));
         return ResponseEntity.ok().build();
     }
@@ -173,10 +172,10 @@ public class ScheduleController {
             if (scheduleDTO != null) {
                 schedule = scheduleService.convertToEntity(scheduleDTO);
             }
-            
+
             // 일정 생성 및 저장
             Schedule savedSchedule = scheduleService.addTodoToCalendar(todoId, schedule);
-            
+
             // DTO로 변환하여 반환
             ScheduleDTO responseDTO = scheduleService.convertToDTO(savedSchedule);
             return ResponseEntity.ok(responseDTO);
@@ -209,7 +208,7 @@ public class ScheduleController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(scheduleDTOs);
     }
-    
+
     @PatchMapping("/meeting/{id}")
     public ResponseEntity<?> updateScheduleInMeeting(@PathVariable Long id, @RequestBody ScheduleDTO scheduleDTO) {
         Schedule res = scheduleService.updateScheduleInMeeting(id, scheduleDTO);
@@ -218,10 +217,11 @@ public class ScheduleController {
     }
 
     @PatchMapping("my/{scheduleId}")
-    public ResponseEntity<?> updateMySchedule(@PathVariable Long scheduleId, @AuthenticationPrincipal PrincipalDetails principalDetails) {
+    public ResponseEntity<?> updateMySchedule(@PathVariable Long scheduleId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
         Long userId = principalDetails.getUser().getId();
         Schedule res = scheduleService.addToMySchedule(scheduleId, userId);
         ScheduleDTO resDTO = scheduleService.convertToDTO(res);
         return ResponseEntity.ok(resDTO);
     }
-} 
+}

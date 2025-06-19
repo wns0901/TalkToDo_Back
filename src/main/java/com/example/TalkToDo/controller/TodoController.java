@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "*")
 public class TodoController {
     private static final Logger logger = LoggerFactory.getLogger(TodoController.class);
 
@@ -88,7 +87,8 @@ public class TodoController {
     }
 
     @PatchMapping("/{todoId}/add-to-calendar")
-    public ResponseEntity<?> addTodoToCalendar(@PathVariable Long todoId, @AuthenticationPrincipal PrincipalDetails principalDetails) {
+    public ResponseEntity<?> addTodoToCalendar(@PathVariable Long todoId,
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
         Long userId = principalDetails.getUser().getId();
         return ResponseEntity.ok(todoService.addTodoToCalendar(todoId, userId));
     }
@@ -129,9 +129,9 @@ public class TodoController {
     public ResponseEntity<List<TodoDTO>> getTodosByUser(
             @PathVariable Long userId,
             @AuthenticationPrincipal PrincipalDetails principalDetails) {
-        logger.info("Request to get todos for user {} by user {}", 
-            userId, principalDetails.getUser().getId());
-            
+        logger.info("Request to get todos for user {} by user {}",
+                userId, principalDetails.getUser().getId());
+
         // 현재 로그인한 사용자와 요청한 userId가 일치하는지 확인
         if (principalDetails == null || principalDetails.getUser() == null) {
             logger.warn("Access denied: No authenticated user");
@@ -139,8 +139,8 @@ public class TodoController {
         }
 
         if (!principalDetails.getUser().getId().equals(userId)) {
-            logger.warn("Access denied: User {} tried to access todos for user {}", 
-                principalDetails.getUser().getId(), userId);
+            logger.warn("Access denied: User {} tried to access todos for user {}",
+                    principalDetails.getUser().getId(), userId);
             return ResponseEntity.status(403).build();
         }
 
@@ -155,4 +155,4 @@ public class TodoController {
             return ResponseEntity.status(500).build();
         }
     }
-} 
+}
