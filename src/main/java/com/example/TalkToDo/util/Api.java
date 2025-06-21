@@ -52,10 +52,13 @@ public class Api {
 
       HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-      log.info("AI 서버로 요청 전송 시작");
-      ResponseEntity<MeetingDataDTO> response = restTemplate.postForEntity(aiServerUrl + "/process-meeting", requestEntity,
+      long startTime = System.currentTimeMillis();
+      log.info("AI 서버로 요청 전송 시작 - 타임아웃 설정: 연결 30초, 읽기 10분");
+      ResponseEntity<MeetingDataDTO> response = restTemplate.postForEntity(aiServerUrl + "/process-meeting",
+          requestEntity,
           MeetingDataDTO.class);
-      log.info("AI 서버 응답 수신 완료");
+      long endTime = System.currentTimeMillis();
+      log.info("AI 서버 응답 수신 완료 - 처리 시간: {}초", (endTime - startTime) / 1000.0);
 
       return response.getBody();
     } catch (IOException e) {
@@ -80,17 +83,22 @@ public class Api {
       String jsonBody = mapper.writeValueAsString(requestBody);
 
       HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
+
+      long startTime = System.currentTimeMillis();
+      log.info("AI 채팅 요청 시작 - 타임아웃 설정: 연결 30초, 읽기 10분");
       ResponseEntity<String> response = restTemplate.postForEntity(aiServerUrl + "/chat", requestEntity, String.class);
-      
+      long endTime = System.currentTimeMillis();
+      log.info("AI 채팅 응답 수신 완료 - 처리 시간: {}초", (endTime - startTime) / 1000.0);
+
       // JSON 응답에서 response 필드 추출
       JsonNode rootNode = mapper.readTree(response.getBody());
       JsonNode responseNode = rootNode.get("response");
-      
+
       if (responseNode == null) {
         log.warn("응답에 'response' 필드가 없습니다. 전체 응답: {}", response.getBody());
         return response.getBody();
       }
-      
+
       return responseNode.asText();
     } catch (Exception e) {
       log.error("AI 서버 요청 중 오류 발생: {}", e.getMessage(), e);
