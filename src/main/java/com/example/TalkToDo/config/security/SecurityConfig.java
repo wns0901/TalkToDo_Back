@@ -44,7 +44,7 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOriginPatterns(
-        Arrays.asList("https://*.kro.kr", "http://localhost:3000", "http://localhost:3001"));
+        Arrays.asList("https://talktodo.kro.kr", "https://*.kro.kr", "http://localhost:3000", "http://localhost:3001"));
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "User-Agent",
         "DNT", "Cache-Control", "X-Mx-ReqToken", "Keep-Alive", "X-Requested-With", "If-Modified-Since"));
